@@ -1,6 +1,7 @@
 from app import db
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
+import secrets
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -8,6 +9,7 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
+    api_key = db.Column(db.String(64), unique=True)  # API key personal del usuario
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     last_login = db.Column(db.DateTime)
 
@@ -16,6 +18,12 @@ class User(db.Model):
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+    
+    def generate_api_key(self):
+        """Genera una API key única para el usuario"""
+        if not self.api_key:
+            self.api_key = secrets.token_hex(32)
+        return self.api_key
 
 class ApiKey(db.Model):
     id = db.Column(db.Integer, primary_key=True)

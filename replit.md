@@ -10,6 +10,10 @@ Panel L3HO is a comprehensive web-based administrative control system designed t
 - ✅ RESTful API endpoints with API key validation for external integrations
 - ✅ Export/import functionality for CSV and JSON formats
 - ✅ Real-time system monitoring and update logs
+- ✅ **NEW: Private Football API with real data scraping**
+- ✅ **NEW: Personal API key management system**
+- ✅ **NEW: Web scraping service for Liga MX data**
+- ✅ **NEW: Protected API endpoints with authentication**
 
 # User Preferences
 
@@ -46,6 +50,9 @@ The backend follows a standard Flask MVC pattern with separation of concerns:
 - **Data Export**: CSV and JSON export functionality with API key validation
 - **System Monitoring**: Activity logs, update history, and system status tracking
 - **RESTful API**: External API endpoints for integration with other applications
+- **Private Football API**: Complete API system with real Liga MX data scraping
+- **Personal API Keys**: Individual API key generation and management for users
+- **Web Scraping**: Real-time data extraction from ESPN and Liga MX sources
 
 The application uses Flask-SQLAlchemy ORM for database operations and includes comprehensive error handling and logging.
 
@@ -82,3 +89,31 @@ Authentication is handled through Flask sessions with secure password hashing. T
 - **Environment Variables**: Configuration management for secrets and database URLs
 
 The application is designed to integrate with various external APIs across different service categories (TMDB, Spotify, APK Mirror, Football APIs) through the configurable API key management system.
+
+## Private Football API
+
+The system now includes a comprehensive private API for football data with the following endpoints:
+
+### API Endpoints (Require ?key=YOUR_API_KEY)
+- **GET /api/info** - API documentation and user information
+- **GET /api/tabla** - Liga MX standings with real-time data from ESPN
+- **GET /api/jugadores?equipo=TEAM** - Player roster for specific teams
+- **GET /api/logo?equipo=TEAM** - Team logos and branding
+- **GET /api/calendario** - Match calendar and upcoming fixtures
+
+### Data Sources
+- **ESPN Mexico**: Primary source for Liga MX standings and statistics
+- **Liga MX Official**: Secondary source for team and player data
+- **Fallback System**: Structured real data when scraping fails
+
+### Security Features
+- Personal API key authentication for all endpoints
+- User-specific access control and logging
+- Rate limiting and error handling
+- Secure key generation with crypto-safe randomness
+
+### Management Interface
+- **Admin Panel**: Generate and manage personal API keys
+- **Testing Tools**: Built-in API testing and validation
+- **Documentation**: Interactive API documentation with examples
+- **Key Regeneration**: Secure API key rotation functionality

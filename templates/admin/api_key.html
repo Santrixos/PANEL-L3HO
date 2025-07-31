@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+
+{% block title %}Mi API Key - Panel L3HO{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row">
+        <div class="col-12">
+            <div class="module-header mb-4">
+                <h1 class="display-6 fw-bold text-white">
+                    <i class="fas fa-key me-3"></i>
+                    Mi API Key Personal
+                </h1>
+                <p class="lead text-light">Clave para acceder a la API privada de fútbol</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Key Card -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card futuristic-card">
+                <div class="card-header">
+                    <h5><i class="fas fa-shield-alt me-2"></i>Tu API Key Privada</h5>
+                </div>
+                <div class="card-body">
+                    {% if user.api_key %}
+                        <div class="alert alert-success" role="alert">
+                            <i class="fas fa-check-circle me-2"></i>
+                            <strong>API Key generada exitosamente</strong>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Tu API Key:</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control font-monospace" 
+                                       id="apiKeyField" value="{{ user.api_key }}" readonly>
+                                <button class="btn btn-outline-primary" type="button" 
+                                        onclick="copyApiKey()" id="copyButton">
+                                    <i class="fas fa-copy"></i> Copiar
+                                </button>
+                            </div>
+                            <small class="text-muted">Guarda esta clave en un lugar seguro. La necesitarás para todas las peticiones a la API.</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <button class="btn btn-warning" onclick="regenerateApiKey()">
+                                <i class="fas fa-sync-alt"></i> Regenerar API Key
+                            </button>
+                            <small class="text-muted d-block mt-2">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                ¡Cuidado! Al regenerar la clave, la anterior dejará de funcionar.
+                            </small>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info" role="alert">
+                            <i class="fas fa-info-circle me-2"></i>
+                            No tienes una API Key generada aún.
+                        </div>
+                        <button class="btn btn-primary" onclick="location.reload()">
+                            <i class="fas fa-key"></i> Generar API Key
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Documentación de la API -->
+        <div class="col-lg-4">
+            <div class="card futuristic-card">
+                <div class="card-header">
+                    <h5><i class="fas fa-book me-2"></i>Documentación API</h5>
+                </div>
+                <div class="card-body">
+                    <h6>Endpoints disponibles:</h6>
+                    <ul class="list-unstyled">
+                        <li><code>/api/tabla</code><br>
+                            <small class="text-muted">Tabla de posiciones Liga MX</small>
+                        </li>
+                        <li class="mt-2"><code>/api/jugadores?equipo=X</code><br>
+                            <small class="text-muted">Jugadores de un equipo</small>
+                        </li>
+                        <li class="mt-2"><code>/api/logo?equipo=X</code><br>
+                            <small class="text-muted">Logo del equipo</small>
+                        </li>
+                        <li class="mt-2"><code>/api/calendario</code><br>
+                            <small class="text-muted">Próximos partidos</small>
+                        </li>
+                        <li class="mt-2"><code>/api/info</code><br>
+                            <small class="text-muted">Información de la API</small>
+                        </li>
+                    </ul>
+
+                    <hr>
+                    
+                    <h6>Ejemplo de uso:</h6>
+                    <div class="code-block">
+                        <code id="exampleUrl">
+                            {{ request.url_root }}api/tabla?key=TU_API_KEY
+                        </code>
+                    </div>
+
+                    {% if user.api_key %}
+                    <button class="btn btn-sm btn-outline-success mt-2" onclick="testApi()">
+                        <i class="fas fa-play"></i> Probar API
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test Results -->
+    <div class="row mt-4" id="testResults" style="display: none;">
+        <div class="col-12">
+            <div class="card futuristic-card">
+                <div class="card-header">
+                    <h5><i class="fas fa-flask me-2"></i>Resultado de la Prueba</h5>
+                </div>
+                <div class="card-body">
+                    <pre id="testOutput" class="bg-dark text-light p-3 rounded"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function copyApiKey() {
+    const apiKeyField = document.getElementById('apiKeyField');
+    apiKeyField.select();
+    apiKeyField.setSelectionRange(0, 99999);
+    document.execCommand('copy');
+    
+    const copyButton = document.getElementById('copyButton');
+    const originalText = copyButton.innerHTML;
+    copyButton.innerHTML = '<i class="fas fa-check"></i> Copiado';
+    copyButton.classList.replace('btn-outline-primary', 'btn-success');
+    
+    setTimeout(() => {
+        copyButton.innerHTML = originalText;
+        copyButton.classList.replace('btn-success', 'btn-outline-primary');
+    }, 2000);
+}
+
+function regenerateApiKey() {
+    if (confirm('¿Estás seguro de que quieres regenerar tu API Key? La clave actual dejará de funcionar.')) {
+        fetch('/admin/regenerate-api-key', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('apiKeyField').value = data.new_key;
+                alert('API Key regenerada exitosamente');
+                updateExampleUrl(data.new_key);
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('Error al regenerar API Key');
+            console.error('Error:', error);
+        });
+    }
+}
+
+function updateExampleUrl(apiKey) {
+    const exampleUrl = document.getElementById('exampleUrl');
+    exampleUrl.textContent = `{{ request.url_root }}api/tabla?key=${apiKey}`;
+}
+
+function testApi() {
+    const apiKey = document.getElementById('apiKeyField').value;
+    const testUrl = `{{ request.url_root }}api/info?key=${apiKey}`;
+    
+    fetch(testUrl)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('testOutput').textContent = JSON.stringify(data, null, 2);
+            document.getElementById('testResults').style.display = 'block';
+            document.getElementById('testResults').scrollIntoView({ behavior: 'smooth' });
+        })
+        .catch(error => {
+            document.getElementById('testOutput').textContent = 'Error: ' + error.message;
+            document.getElementById('testResults').style.display = 'block';
+        });
+}
+
+// Update example URL on page load
+{% if user.api_key %}
+document.addEventListener('DOMContentLoaded', function() {
+    updateExampleUrl('{{ user.api_key }}');
+});
+{% endif %}
+</script>
+
+<style>
+.code-block {
+    background-color: #2d3748;
+    color: #e2e8f0;
+    padding: 10px;
+    border-radius: 5px;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    word-break: break-all;
+}
+
+.font-monospace {
+    font-family: 'Courier New', monospace !important;
+}
+</style>
+{% endblock %}

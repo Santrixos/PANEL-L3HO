@@ -2,9 +2,12 @@ from flask import render_template, request, redirect, url_for, session, flash, j
 from werkzeug.security import generate_password_hash
 from app import app, db
 from models import User, ApiKey, WebsiteControl
+from services.futbol import FutbolService
 from datetime import datetime
 import requests
 import os
+import secrets
+from functools import wraps
 
 @app.route('/')
 def index():
@@ -166,6 +169,195 @@ def update_website_status(website_id):
             return jsonify({'success': False, 'message': 'Estado inválido'})
     except Exception as e:
         return jsonify({'success': False, 'message': f'Error: {str(e)}'})
+
+# API Protection decorator
+def require_api_key(f):
+    """Decorator para proteger rutas de API con clave personal"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        api_key = request.args.get('key')
+        if not api_key:
+            return jsonify({
+                'error': 'API Key requerida',
+                'message': 'Incluye el parámetro ?key=TU_API_KEY en la URL'
+            }), 401
+        
+        # Verificar que la API key existe y pertenece a un usuario válido
+        user = User.query.filter_by(api_key=api_key).first()
+        if not user:
+            return jsonify({
+                'error': 'API Key inválida',
+                'message': 'La clave proporcionada no es válida'
+            }), 403
+        
+        # Pasar el usuario al endpoint
+        return f(user, *args, **kwargs)
+    return decorated_function
+
+# ========================================
+# API PRIVADA DE FÚTBOL
+# ========================================
+
+@app.route('/api/tabla')
+@require_api_key
+def api_tabla_liga_mx(user):
+    """API: Obtiene la tabla de posiciones de Liga MX"""
+    try:
+        futbol_service = FutbolService()
+        tabla = futbol_service.get_liga_mx_tabla()
+        
+        return jsonify({
+            'success': True,
+            'data': tabla,
+            'api_version': '1.0',
+            'usuario': user.username
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': 'Error interno del servidor',
+            'message': str(e)
+        }), 500
+
+@app.route('/api/jugadores')
+@require_api_key
+def api_jugadores_equipo(user):
+    """API: Obtiene jugadores de un equipo específico"""
+    equipo = request.args.get('equipo')
+    if not equipo:
+        return jsonify({
+            'error': 'Parámetro requerido',
+            'message': 'Incluye el parámetro ?equipo=NOMBRE_EQUIPO'
+        }), 400
+    
+    try:
+        futbol_service = FutbolService()
+        jugadores = futbol_service.get_jugadores_equipo(equipo)
+        
+        return jsonify({
+            'success': True,
+            'data': jugadores,
+            'api_version': '1.0',
+            'usuario': user.username
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': 'Error interno del servidor',
+            'message': str(e)
+        }), 500
+
+@app.route('/api/logo')
+@require_api_key
+def api_logo_equipo(user):
+    """API: Obtiene el logo de un equipo"""
+    equipo = request.args.get('equipo')
+    if not equipo:
+        return jsonify({
+            'error': 'Parámetro requerido',
+            'message': 'Incluye el parámetro ?equipo=NOMBRE_EQUIPO'
+        }), 400
+    
+    try:
+        futbol_service = FutbolService()
+        logo = futbol_service.get_logo_equipo(equipo)
+        
+        return jsonify({
+            'success': True,
+            'data': logo,
+            'api_version': '1.0',
+            'usuario': user.username
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': 'Error interno del servidor',
+            'message': str(e)
+        }), 500
+
+@app.route('/api/calendario')
+@require_api_key
+def api_calendario_liga_mx(user):
+    """API: Obtiene el calendario de partidos de Liga MX"""
+    try:
+        futbol_service = FutbolService()
+        calendario = futbol_service.get_calendario_liga_mx()
+        
+        return jsonify({
+            'success': True,
+            'data': calendario,
+            'api_version': '1.0',
+            'usuario': user.username
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': 'Error interno del servidor',
+            'message': str(e)
+        }), 500
+
+@app.route('/api/info')
+@require_api_key
+def api_info(user):
+    """API: Información general de la API de fútbol"""
+    return jsonify({
+        'api_name': 'Panel L3HO - API Privada de Fútbol',
+        'version': '1.0',
+        'endpoints': {
+            '/api/tabla': 'Tabla de posiciones Liga MX',
+            '/api/jugadores?equipo=X': 'Jugadores de un equipo',
+            '/api/logo?equipo=X': 'Logo de un equipo',
+            '/api/calendario': 'Calendario de partidos',
+            '/api/info': 'Información de la API'
+        },
+        'uso': 'Todos los endpoints requieren ?key=TU_API_KEY',
+        'usuario_actual': user.username,
+        'timestamp': datetime.now().isoformat()
+    })
+
+# ========================================
+# GESTIÓN DE API KEYS
+# ========================================
+
+@app.route('/admin/my-api-key')
+def admin_my_api_key():
+    """Panel para ver/generar la API key personal"""
+    if 'user_id' not in session or not session.get('is_admin'):
+        flash('Acceso denegado. Se requieren permisos de administrador.', 'error')
+        return redirect(url_for('dashboard'))
+    
+    user = User.query.get(session['user_id'])
+    if not user:
+        flash('Usuario no encontrado.', 'error')
+        return redirect(url_for('dashboard'))
+    
+    # Generar API key si no existe
+    if not user.api_key:
+        user.generate_api_key()
+        db.session.commit()
+        flash('API Key generada exitosamente.', 'success')
+    
+    return render_template('admin/api_key.html', user=user)
+
+@app.route('/admin/regenerate-api-key', methods=['POST'])
+def regenerate_api_key():
+    """Regenera la API key del usuario"""
+    if 'user_id' not in session or not session.get('is_admin'):
+        return jsonify({'success': False, 'message': 'Acceso denegado'})
+    
+    user = User.query.get(session['user_id'])
+    if not user:
+        return jsonify({'success': False, 'message': 'Usuario no encontrado'})
+    
+    # Generar nueva API key
+    user.api_key = secrets.token_hex(32)
+    db.session.commit()
+    
+    return jsonify({
+        'success': True, 
+        'message': 'API Key regenerada exitosamente',
+        'new_key': user.api_key
+    })
 
 # Initialize admin user if it doesn't exist
 def create_admin_user():
