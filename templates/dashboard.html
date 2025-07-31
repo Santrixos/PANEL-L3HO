@@ -73,63 +73,83 @@
     <!-- Service Categories -->
     <div class="row g-4 mb-4">
         <div class="col-md-6 col-lg-3">
-            <div class="card futuristic-card service-card movies-card">
-                <div class="card-body text-center">
-                    <div class="service-icon">
-                        <i class="fas fa-film"></i>
-                    </div>
-                    <h5 class="card-title">Películas</h5>
-                    <p class="card-text">Gestión de APIs y sitios de películas</p>
-                    <div class="service-stats">
-                        <span class="badge bg-primary">{{ stats.movies_sites }} sitios</span>
+            <a href="{{ url_for('movies_module') }}" class="text-decoration-none">
+                <div class="card futuristic-card service-card movies-card">
+                    <div class="card-body text-center">
+                        <div class="service-icon">
+                            <i class="fas fa-film"></i>
+                        </div>
+                        <h5 class="card-title">Películas</h5>
+                        <p class="card-text">Gestión de APIs y sitios de películas</p>
+                        <div class="service-stats">
+                            <span class="badge bg-primary">{{ stats.movies_sites }} sitios</span>
+                        </div>
+                        <div class="service-actions mt-3">
+                            <i class="fas fa-arrow-right text-muted"></i>
+                        </div>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
         
         <div class="col-md-6 col-lg-3">
-            <div class="card futuristic-card service-card music-card">
-                <div class="card-body text-center">
-                    <div class="service-icon">
-                        <i class="fas fa-music"></i>
-                    </div>
-                    <h5 class="card-title">Música</h5>
-                    <p class="card-text">Control de plataformas musicales</p>
-                    <div class="service-stats">
-                        <span class="badge bg-success">{{ stats.music_sites }} sitios</span>
+            <a href="{{ url_for('music_module') }}" class="text-decoration-none">
+                <div class="card futuristic-card service-card music-card">
+                    <div class="card-body text-center">
+                        <div class="service-icon">
+                            <i class="fas fa-music"></i>
+                        </div>
+                        <h5 class="card-title">Música</h5>
+                        <p class="card-text">Control de plataformas musicales</p>
+                        <div class="service-stats">
+                            <span class="badge bg-success">{{ stats.music_sites }} sitios</span>
+                        </div>
+                        <div class="service-actions mt-3">
+                            <i class="fas fa-arrow-right text-muted"></i>
+                        </div>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
         
         <div class="col-md-6 col-lg-3">
-            <div class="card futuristic-card service-card apps-card">
-                <div class="card-body text-center">
-                    <div class="service-icon">
-                        <i class="fas fa-mobile-alt"></i>
-                    </div>
-                    <h5 class="card-title">Apps MOD</h5>
-                    <p class="card-text">Aplicaciones modificadas</p>
-                    <div class="service-stats">
-                        <span class="badge bg-info">{{ stats.mod_apps_sites }} sitios</span>
+            <a href="{{ url_for('mod_apps_module') }}" class="text-decoration-none">
+                <div class="card futuristic-card service-card apps-card">
+                    <div class="card-body text-center">
+                        <div class="service-icon">
+                            <i class="fas fa-mobile-alt"></i>
+                        </div>
+                        <h5 class="card-title">Apps MOD</h5>
+                        <p class="card-text">Aplicaciones modificadas</p>
+                        <div class="service-stats">
+                            <span class="badge bg-info">{{ stats.mod_apps_sites }} sitios</span>
+                        </div>
+                        <div class="service-actions mt-3">
+                            <i class="fas fa-arrow-right text-muted"></i>
+                        </div>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
         
         <div class="col-md-6 col-lg-3">
-            <div class="card futuristic-card service-card football-card">
-                <div class="card-body text-center">
-                    <div class="service-icon">
-                        <i class="fas fa-futbol"></i>
-                    </div>
-                    <h5 class="card-title">Fútbol</h5>
-                    <p class="card-text">Deportes y estadísticas</p>
-                    <div class="service-stats">
-                        <span class="badge bg-warning">{{ stats.football_sites }} sitios</span>
+            <a href="{{ url_for('football_module') }}" class="text-decoration-none">
+                <div class="card futuristic-card service-card football-card">
+                    <div class="card-body text-center">
+                        <div class="service-icon">
+                            <i class="fas fa-futbol"></i>
+                        </div>
+                        <h5 class="card-title">Fútbol</h5>
+                        <p class="card-text">Deportes y estadísticas</p>
+                        <div class="service-stats">
+                            <span class="badge bg-warning">{{ stats.football_sites }} sitios</span>
+                        </div>
+                        <div class="service-actions mt-3">
+                            <i class="fas fa-arrow-right text-muted"></i>
+                        </div>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
     </div>
 

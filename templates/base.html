@@ -35,11 +35,38 @@
                             <i class="fas fa-tachometer-alt me-1"></i>Dashboard
                         </a>
                     </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="modulesDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-th-large me-1"></i>Módulos
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-dark">
+                            <li><a class="dropdown-item" href="{{ url_for('football_module') }}">
+                                <i class="fas fa-futbol me-2"></i>Fútbol
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('music_module') }}">
+                                <i class="fas fa-music me-2"></i>Música
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('movies_module') }}">
+                                <i class="fas fa-film me-2"></i>Películas
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('mod_apps_module') }}">
+                                <i class="fas fa-mobile-alt me-2"></i>Apps MOD
+                            </a></li>
+                        </ul>
+                    </li>
                     {% if session.is_admin %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('admin') }}">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown">
                             <i class="fas fa-tools me-1"></i>Administración
                         </a>
+                        <ul class="dropdown-menu dropdown-menu-dark">
+                            <li><a class="dropdown-item" href="{{ url_for('admin') }}">
+                                <i class="fas fa-cogs me-2"></i>Panel General
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('view_logs') }}">
+                                <i class="fas fa-clipboard-list me-2"></i>Logs del Sistema
+                            </a></li>
+                        </ul>
                     </li>
                     {% endif %}
                 </ul>

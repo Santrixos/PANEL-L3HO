@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+
+{% block title %}Logs del Sistema - Panel L3HO{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row">
+        <div class="col-12">
+            <div class="admin-header mb-4">
+                <h1 class="display-6 fw-bold text-white">
+                    <i class="fas fa-clipboard-list me-3"></i>
+                    Logs del Sistema
+                </h1>
+                <p class="lead text-light">Historial de actualizaciones y actividad del sistema</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Controls -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card futuristic-card">
+                <div class="card-header">
+                    <h5><i class="fas fa-filter me-2"></i>Filtros</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Fecha Desde</label>
+                            <input type="date" class="form-control" id="dateFrom">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Fecha Hasta</label>
+                            <input type="date" class="form-control" id="dateTo">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Categoría</label>
+                        <select class="form-select" id="categoryFilter">
+                            <option value="">Todas las categorías</option>
+                            <option value="movies">Películas</option>
+                            <option value="music">Música</option>
+                            <option value="mod_apps">Apps MOD</option>
+                            <option value="football">Fútbol</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary w-100" id="applyFilters">
+                        <i class="fas fa-search me-2"></i>Aplicar Filtros
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card futuristic-card">
+                <div class="card-header">
+                    <h5><i class="fas fa-chart-line me-2"></i>Estadísticas</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6 text-center">
+                            <h4 class="text-primary">{{ recent_updates|length }}</h4>
+                            <small class="text-muted">Actualizaciones Hoy</small>
+                        </div>
+                        <div class="col-6 text-center">
+                            <h4 class="text-success">{{ recent_updates|selectattr("status", "equalto", "active")|list|length }}</h4>
+                            <small class="text-muted">Sitios Activos</small>
+                        </div>
+                    </div>
+                    <hr>
+                    <button class="btn btn-success w-100 mb-2" id="exportLogs">
+                        <i class="fas fa-download me-2"></i>Exportar Logs
+                    </button>
+                    <button class="btn btn-warning w-100" id="clearOldLogs">
+                        <i class="fas fa-trash-alt me-2"></i>Limpiar Logs Antiguos
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logs Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card futuristic-card">
+                <div class="card-header">
+                    <h5><i class="fas fa-list me-2"></i>Historial de Actualizaciones</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Fecha/Hora</th>
+                                    <th>Sitio Web</th>
+                                    <th>Categoría</th>
+                                    <th>Estado</th>
+                                    <th>URL</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if recent_updates %}
+                                    {% for update in recent_updates %}
+                                    <tr>
+                                        <td>
+                                            {% if update.last_check %}
+                                                {{ update.last_check.strftime('%d/%m/%Y %H:%M:%S') }}
+                                            {% else %}
+                                                <span class="text-muted">--</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <strong>{{ update.name }}</strong>
+                                            {% if update.description %}
+                                                <br><small class="text-muted">{{ update.description[:50] }}...</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-service-{{ update.category }}">
+                                                {{ update.category.title() }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-{{ 'success' if update.status == 'active' else 'warning' if update.status == 'maintenance' else 'danger' }}">
+                                                {{ update.status.title() }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <a href="{{ update.url }}" target="_blank" class="text-info">
+                                                <i class="fas fa-external-link-alt"></i>
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-info" onclick="viewDetails({{ update.id }})">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted py-4">
+                                            <i class="fas fa-inbox fa-2x mb-2"></i><br>
+                                            No hay logs de actualizaciones registrados
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Status -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card futuristic-card">
+                <div class="card-header">
+                    <h5><i class="fas fa-heartbeat me-2"></i>Estado del Sistema</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 text-center">
+                            <div class="system-status-item">
+                                <i class="fas fa-server text-success fa-2x mb-2"></i>
+                                <h6>Servidor</h6>
+                                <span class="badge bg-success">Operativo</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="system-status-item">
+                                <i class="fas fa-database text-success fa-2x mb-2"></i>
+                                <h6>Base de Datos</h6>
+                                <span class="badge bg-success">Conectada</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="system-status-item">
+                                <i class="fas fa-key text-warning fa-2x mb-2"></i>
+                                <h6>APIs</h6>
+                                <span class="badge bg-warning">Verificando</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="system-status-item">
+                                <i class="fas fa-shield-alt text-success fa-2x mb-2"></i>
+                                <h6>Seguridad</h6>
+                                <span class="badge bg-success">Protegido</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function viewDetails(id) {
+    // Implementation for viewing log details
+    PanelL3HO.showAlert('Funcionalidad en desarrollo', 'info');
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const exportBtn = document.getElementById('exportLogs');
+    const clearBtn = document.getElementById('clearOldLogs');
+    
+    exportBtn.addEventListener('click', function() {
+        // Export logs functionality
+        PanelL3HO.showAlert('Exportando logs...', 'info');
+    });
+    
+    clearBtn.addEventListener('click', function() {
+        if (confirm('¿Está seguro de que desea eliminar los logs antiguos?')) {
+            PanelL3HO.showAlert('Funcionalidad en desarrollo', 'warning');
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -152,7 +152,9 @@ def update_website_status(website_id):
         website = WebsiteControl.query.get(website_id)
         if not website:
             return jsonify({'success': False, 'message': 'Sitio web no encontrado'})
-        new_status = request.json.get('status')
+        
+        data = request.get_json()
+        new_status = data.get('status') if data else None
         
         if new_status in ['active', 'inactive', 'maintenance']:
             website.status = new_status
@@ -177,6 +179,162 @@ def create_admin_user():
         db.session.add(admin)
         db.session.commit()
         print("Admin user created: admin/admin123")
+
+# Football/Sports module routes
+@app.route('/football')
+def football_module():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    leagues = [
+        {'id': 'mx', 'name': 'Liga MX', 'country': 'México'},
+        {'id': 'es', 'name': 'LaLiga', 'country': 'España'},
+        {'id': 'en', 'name': 'Premier League', 'country': 'Inglaterra'},
+        {'id': 'de', 'name': 'Bundesliga', 'country': 'Alemania'},
+        {'id': 'it', 'name': 'Serie A', 'country': 'Italia'},
+        {'id': 'fr', 'name': 'Ligue 1', 'country': 'Francia'}
+    ]
+    
+    return render_template('modules/football.html', leagues=leagues)
+
+@app.route('/music')
+def music_module():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    return render_template('modules/music.html')
+
+@app.route('/movies')
+def movies_module():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    return render_template('modules/movies.html')
+
+@app.route('/mod_apps')
+def mod_apps_module():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    return render_template('modules/mod_apps.html')
+
+# API endpoints for data export
+@app.route('/api/export/<category>')
+def export_data(category):
+    if 'user_id' not in session:
+        return jsonify({'error': 'Authentication required'}), 401
+    
+    # Get API key validation
+    api_key = request.headers.get('X-API-Key')
+    if not api_key:
+        return jsonify({'error': 'API Key required'}), 401
+    
+    # Validate API key
+    valid_api = ApiKey.query.filter_by(api_key=api_key, is_active=True).first()
+    if not valid_api:
+        return jsonify({'error': 'Invalid API Key'}), 401
+    
+    try:
+        if category == 'websites':
+            websites = WebsiteControl.query.all()
+            data = [{
+                'id': w.id,
+                'name': w.name,
+                'category': w.category,
+                'url': w.url,
+                'status': w.status,
+                'created_at': w.created_at.isoformat() if w.created_at else None
+            } for w in websites]
+        elif category == 'apis':
+            apis = ApiKey.query.all()
+            data = [{
+                'id': a.id,
+                'service_name': a.service_name,
+                'service_type': a.service_type,
+                'is_active': a.is_active,
+                'created_at': a.created_at.isoformat() if a.created_at else None
+            } for a in apis]
+        else:
+            return jsonify({'error': 'Invalid category'}), 400
+        
+        return jsonify({
+            'success': True,
+            'data': data,
+            'count': len(data),
+            'exported_at': datetime.utcnow().isoformat()
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/status')
+def api_status():
+    """API endpoint to check system status"""
+    api_key = request.headers.get('X-API-Key')
+    if not api_key:
+        return jsonify({'error': 'API Key required'}), 401
+    
+    valid_api = ApiKey.query.filter_by(api_key=api_key, is_active=True).first()
+    if not valid_api:
+        return jsonify({'error': 'Invalid API Key'}), 401
+    
+    stats = {
+        'total_apis': ApiKey.query.count(),
+        'active_apis': ApiKey.query.filter_by(is_active=True).count(),
+        'total_websites': WebsiteControl.query.count(),
+        'active_websites': WebsiteControl.query.filter_by(status='active').count(),
+        'last_updated': datetime.utcnow().isoformat(),
+        'system_status': 'operational'
+    }
+    
+    return jsonify(stats)
+
+# Update logs and activity tracking
+@app.route('/admin/logs')
+def view_logs():
+    if 'user_id' not in session or not session.get('is_admin'):
+        flash('Acceso denegado. Se requieren permisos de administrador.', 'error')
+        return redirect(url_for('dashboard'))
+    
+    # Get recent website updates
+    recent_updates = WebsiteControl.query.filter(
+        WebsiteControl.last_check.isnot(None)
+    ).order_by(WebsiteControl.last_check.desc()).limit(50).all()
+    
+    return render_template('admin/logs.html', recent_updates=recent_updates)
+
+@app.route('/admin/api/test/<int:api_id>', methods=['POST'])
+def test_api_connection(api_id):
+    if 'user_id' not in session or not session.get('is_admin'):
+        return jsonify({'success': False, 'message': 'Acceso denegado'})
+    
+    try:
+        api = ApiKey.query.get(api_id)
+        if not api:
+            return jsonify({'success': False, 'message': 'API no encontrada'})
+        
+        # Test API connection based on service type
+        test_url = api.api_url or 'https://httpbin.org/get'
+        headers = {'Authorization': f'Bearer {api.api_key}'} if api.api_key else {}
+        
+        response = requests.get(test_url, headers=headers, timeout=10)
+        
+        if response.status_code == 200:
+            return jsonify({
+                'success': True, 
+                'message': 'Conexión exitosa',
+                'status_code': response.status_code
+            })
+        else:
+            return jsonify({
+                'success': False, 
+                'message': f'Error de conexión: {response.status_code}'
+            })
+    except requests.exceptions.Timeout:
+        return jsonify({'success': False, 'message': 'Timeout de conexión'})
+    except requests.exceptions.ConnectionError:
+        return jsonify({'success': False, 'message': 'Error de conexión'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'})
 
 # Call this function when the app starts
 with app.app_context():

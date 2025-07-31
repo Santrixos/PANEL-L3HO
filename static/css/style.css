@@ -297,18 +297,130 @@ body {
 .service-card {
     transition: all 0.3s ease;
     cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.service-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.5s;
+}
+
+.service-card:hover::before {
+    left: 100%;
+}
+
+.service-card:hover {
+    transform: translateY(-8px) scale(1.03);
+    box-shadow: 0 15px 40px rgba(0, 212, 255, 0.4);
 }
 
 .service-icon {
     font-size: 3rem;
     margin-bottom: 1rem;
     color: var(--primary-color);
+    transition: all 0.3s ease;
+}
+
+.service-card:hover .service-icon {
+    transform: scale(1.1);
 }
 
 .movies-card .service-icon { color: #ff6b35; }
 .music-card .service-icon { color: #00ff88; }
 .apps-card .service-icon { color: #8b5cf6; }
 .football-card .service-icon { color: #ffaa00; }
+
+.service-actions {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.service-card:hover .service-actions {
+    opacity: 1;
+}
+
+/* Module Headers */
+.module-header {
+    background: var(--bg-gradient);
+    border-radius: var(--border-radius);
+    padding: 2rem;
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+/* Timeline for update history */
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--primary-color);
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+    padding-left: 25px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -6px;
+    top: 0;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid var(--bg-dark);
+}
+
+.timeline-content {
+    background: rgba(26, 26, 26, 0.8);
+    padding: 15px;
+    border-radius: var(--border-radius);
+    border: 1px solid rgba(0, 212, 255, 0.2);
+}
+
+/* System status items */
+.system-status-item {
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    background: rgba(255, 255, 255, 0.05);
+    transition: all 0.3s ease;
+}
+
+.system-status-item:hover {
+    background: rgba(0, 212, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+/* Feature preview for module placeholders */
+.feature-preview {
+    padding: 2rem 1rem;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--border-radius);
+    transition: all 0.3s ease;
+    margin-bottom: 1rem;
+}
+
+.feature-preview:hover {
+    background: rgba(0, 212, 255, 0.1);
+    transform: translateY(-3px);
+}
 
 /* Tables */
 .table-dark {
