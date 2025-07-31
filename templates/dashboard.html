@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Panel L3HO{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row">
+        <div class="col-12">
+            <div class="dashboard-header mb-4">
+                <h1 class="display-6 fw-bold text-white">
+                    <i class="fas fa-tachometer-alt me-3"></i>
+                    Dashboard de Control
+                </h1>
+                <p class="lead text-light">Bienvenido al Panel L3HO - Sistema de gestión avanzado</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card futuristic-card stats-card">
+                <div class="card-body text-center">
+                    <div class="stats-icon bg-primary">
+                        <i class="fas fa-key"></i>
+                    </div>
+                    <h3 class="stats-number">{{ stats.active_apis }}</h3>
+                    <p class="stats-label">APIs Activas</p>
+                    <small class="text-muted">de {{ stats.total_apis }} totales</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card futuristic-card stats-card">
+                <div class="card-body text-center">
+                    <div class="stats-icon bg-success">
+                        <i class="fas fa-globe"></i>
+                    </div>
+                    <h3 class="stats-number">{{ stats.active_websites }}</h3>
+                    <p class="stats-label">Sitios Activos</p>
+                    <small class="text-muted">de {{ stats.total_websites }} totales</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card futuristic-card stats-card">
+                <div class="card-body text-center">
+                    <div class="stats-icon bg-info">
+                        <i class="fas fa-film"></i>
+                    </div>
+                    <h3 class="stats-number">{{ stats.movies_sites }}</h3>
+                    <p class="stats-label">Sitios de Películas</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card futuristic-card stats-card">
+                <div class="card-body text-center">
+                    <div class="stats-icon bg-warning">
+                        <i class="fas fa-music"></i>
+                    </div>
+                    <h3 class="stats-number">{{ stats.music_sites }}</h3>
+                    <p class="stats-label">Sitios de Música</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Service Categories -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-6 col-lg-3">
+            <div class="card futuristic-card service-card movies-card">
+                <div class="card-body text-center">
+                    <div class="service-icon">
+                        <i class="fas fa-film"></i>
+                    </div>
+                    <h5 class="card-title">Películas</h5>
+                    <p class="card-text">Gestión de APIs y sitios de películas</p>
+                    <div class="service-stats">
+                        <span class="badge bg-primary">{{ stats.movies_sites }} sitios</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-3">
+            <div class="card futuristic-card service-card music-card">
+                <div class="card-body text-center">
+                    <div class="service-icon">
+                        <i class="fas fa-music"></i>
+                    </div>
+                    <h5 class="card-title">Música</h5>
+                    <p class="card-text">Control de plataformas musicales</p>
+                    <div class="service-stats">
+                        <span class="badge bg-success">{{ stats.music_sites }} sitios</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-3">
+            <div class="card futuristic-card service-card apps-card">
+                <div class="card-body text-center">
+                    <div class="service-icon">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <h5 class="card-title">Apps MOD</h5>
+                    <p class="card-text">Aplicaciones modificadas</p>
+                    <div class="service-stats">
+                        <span class="badge bg-info">{{ stats.mod_apps_sites }} sitios</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-3">
+            <div class="card futuristic-card service-card football-card">
+                <div class="card-body text-center">
+                    <div class="service-icon">
+                        <i class="fas fa-futbol"></i>
+                    </div>
+                    <h5 class="card-title">Fútbol</h5>
+                    <p class="card-text">Deportes y estadísticas</p>
+                    <div class="service-stats">
+                        <span class="badge bg-warning">{{ stats.football_sites }} sitios</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card futuristic-card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clock me-2"></i>
+                        Sitios Web Recientes
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_websites %}
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Categoría</th>
+                                    <th>Estado</th>
+                                    <th>Fecha</th>
+                                    <th>Enlace</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for website in recent_websites %}
+                                <tr>
+                                    <td>{{ website.name }}</td>
+                                    <td>
+                                        <span class="badge badge-service-{{ website.category }}">
+                                            {{ website.category.title() }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if website.status == 'active' else 'warning' if website.status == 'maintenance' else 'danger' }}">
+                                            {{ website.status.title() }}
+                                        </span>
+                                    </td>
+                                    <td>{{ website.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                                    <td>
+                                        <a href="{{ website.url }}" target="_blank" class="btn btn-sm btn-outline-info">
+                                            <i class="fas fa-external-link-alt"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-inbox fa-3x mb-3 opacity-50"></i>
+                        <p>No hay sitios web configurados aún</p>
+                        {% if session.is_admin %}
+                        <a href="{{ url_for('admin') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-plus me-2"></i>Agregar Sitio Web
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Dashboard animations and interactions
+document.addEventListener('DOMContentLoaded', function() {
+    // Animate stats cards
+    const statsCards = document.querySelectorAll('.stats-card');
+    statsCards.forEach((card, index) => {
+        setTimeout(() => {
+            card.style.animationDelay = `${index * 0.1}s`;
+            card.classList.add('animate-fade-in');
+        }, index * 100);
+    });
+    
+    // Service cards hover effect
+    const serviceCards = document.querySelectorAll('.service-card');
+    serviceCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-5px) scale(1.02)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+        });
+    });
+    
+    // Auto-refresh stats every 30 seconds
+    setInterval(() => {
+        // Refresh page data if needed
+        console.log('Auto-refresh triggered');
+    }, 30000);
+});
+</script>
+{% endblock %}

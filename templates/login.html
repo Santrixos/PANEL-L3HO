@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Login - Panel L3HO{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <div class="login-card">
+        <div class="login-header">
+            <div class="logo-container">
+                <i class="fas fa-rocket logo-icon"></i>
+                <h1 class="brand-title">PANEL L3HO</h1>
+                <p class="brand-subtitle">Sistema de Control Avanzado</p>
+            </div>
+        </div>
+        
+        <div class="login-body">
+            <form method="POST" class="login-form">
+                <div class="form-floating mb-3">
+                    <input type="text" class="form-control futuristic-input" id="username" name="username" placeholder="Usuario" required>
+                    <label for="username"><i class="fas fa-user me-2"></i>Usuario</label>
+                </div>
+                
+                <div class="form-floating mb-4">
+                    <input type="password" class="form-control futuristic-input" id="password" name="password" placeholder="Contraseña" required>
+                    <label for="password"><i class="fas fa-lock me-2"></i>Contraseña</label>
+                </div>
+                
+                <button type="submit" class="btn btn-primary futuristic-btn w-100">
+                    <i class="fas fa-sign-in-alt me-2"></i>
+                    ACCEDER AL SISTEMA
+                </button>
+            </form>
+        </div>
+        
+        <div class="login-footer">
+            <p class="text-muted small">
+                <i class="fas fa-shield-alt me-1"></i>
+                Acceso seguro y protegido
+            </p>
+        </div>
+    </div>
+    
+    <!-- Background Animation -->
+    <div class="background-animation">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Add some interactive effects to login
+document.addEventListener('DOMContentLoaded', function() {
+    const inputs = document.querySelectorAll('.futuristic-input');
+    
+    inputs.forEach(input => {
+        input.addEventListener('focus', function() {
+            this.parentElement.classList.add('input-focused');
+        });
+        
+        input.addEventListener('blur', function() {
+            this.parentElement.classList.remove('input-focused');
+        });
+    });
+    
+    // Form submission animation
+    const form = document.querySelector('.login-form');
+    form.addEventListener('submit', function() {
+        const btn = this.querySelector('.futuristic-btn');
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>PROCESANDO...';
+        btn.disabled = true;
+    });
+});
+</script>
+{% endblock %}

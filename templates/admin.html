@@ -1,0 +1,294 @@
+{% extends "base.html" %}
+
+{% block title %}Administración - Panel L3HO{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="admin-header mb-4">
+                <h1 class="display-6 fw-bold text-white">
+                    <i class="fas fa-tools me-3"></i>
+                    Panel de Administración
+                </h1>
+                <p class="lead text-light">Gestiona APIs, sitios web y configuraciones del sistema</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs Navigation -->
+    <div class="row">
+        <div class="col-12">
+            <nav class="futuristic-tabs">
+                <div class="nav nav-tabs" id="nav-tab" role="tablist">
+                    <button class="nav-link active" id="nav-apis-tab" data-bs-toggle="tab" data-bs-target="#nav-apis" type="button" role="tab">
+                        <i class="fas fa-key me-2"></i>Gestión de APIs
+                    </button>
+                    <button class="nav-link" id="nav-websites-tab" data-bs-toggle="tab" data-bs-target="#nav-websites" type="button" role="tab">
+                        <i class="fas fa-globe me-2"></i>Control de Sitios Web
+                    </button>
+                    <button class="nav-link" id="nav-users-tab" data-bs-toggle="tab" data-bs-target="#nav-users" type="button" role="tab">
+                        <i class="fas fa-users me-2"></i>Usuarios
+                    </button>
+                </div>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="tab-content" id="nav-tabContent">
+        <!-- APIs Tab -->
+        <div class="tab-pane fade show active" id="nav-apis" role="tabpanel">
+            <div class="row mt-4">
+                <div class="col-md-4">
+                    <div class="card futuristic-card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-plus me-2"></i>Agregar Nueva API</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="apiForm">
+                                <div class="mb-3">
+                                    <label class="form-label">Servicio</label>
+                                    <select class="form-select" name="service_name" required>
+                                        <option value="">Seleccionar...</option>
+                                        <option value="movies">Películas</option>
+                                        <option value="music">Música</option>
+                                        <option value="mod_apps">Apps MOD</option>
+                                        <option value="football">Fútbol</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Tipo de API</label>
+                                    <input type="text" class="form-control" name="service_type" placeholder="ej: TMDB, Spotify, APK Mirror" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">API Key</label>
+                                    <input type="text" class="form-control" name="api_key" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">URL Base</label>
+                                    <input type="url" class="form-control" name="api_url" placeholder="https://api.ejemplo.com">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Descripción</label>
+                                    <textarea class="form-control" name="description" rows="3"></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fas fa-save me-2"></i>Guardar API
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-8">
+                    <div class="card futuristic-card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-list me-2"></i>APIs Configuradas</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-dark table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Servicio</th>
+                                            <th>Tipo</th>
+                                            <th>Estado</th>
+                                            <th>Fecha</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for api in apis %}
+                                        <tr>
+                                            <td>
+                                                <span class="badge badge-service-{{ api.service_name }}">
+                                                    {{ api.service_name.title() }}
+                                                </span>
+                                            </td>
+                                            <td>{{ api.service_type }}</td>
+                                            <td>
+                                                <span class="badge bg-{{ 'success' if api.is_active else 'danger' }}">
+                                                    {{ 'Activo' if api.is_active else 'Inactivo' }}
+                                                </span>
+                                            </td>
+                                            <td>{{ api.created_at.strftime('%d/%m/%Y') }}</td>
+                                            <td>
+                                                <button class="btn btn-sm btn-danger" onclick="deleteApi({{ api.id }})">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Websites Tab -->
+        <div class="tab-pane fade" id="nav-websites" role="tabpanel">
+            <div class="row mt-4">
+                <div class="col-md-4">
+                    <div class="card futuristic-card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-plus me-2"></i>Agregar Sitio Web</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="websiteForm">
+                                <div class="mb-3">
+                                    <label class="form-label">Nombre del Sitio</label>
+                                    <input type="text" class="form-control" name="name" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Categoría</label>
+                                    <select class="form-select" name="category" required>
+                                        <option value="">Seleccionar...</option>
+                                        <option value="movies">Películas</option>
+                                        <option value="music">Música</option>
+                                        <option value="mod_apps">Apps MOD</option>
+                                        <option value="football">Fútbol</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">URL</label>
+                                    <input type="url" class="form-control" name="url" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">API Asociada</label>
+                                    <select class="form-select" name="api_key_id">
+                                        <option value="">Sin API</option>
+                                        {% for api in apis %}
+                                        <option value="{{ api.id }}">{{ api.service_type }} ({{ api.service_name }})</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Descripción</label>
+                                    <textarea class="form-control" name="description" rows="3"></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fas fa-save me-2"></i>Guardar Sitio
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-8">
+                    <div class="card futuristic-card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-globe me-2"></i>Sitios Web Configurados</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-dark table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Nombre</th>
+                                            <th>Categoría</th>
+                                            <th>Estado</th>
+                                            <th>URL</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for website in websites %}
+                                        <tr>
+                                            <td>{{ website.name }}</td>
+                                            <td>
+                                                <span class="badge badge-service-{{ website.category }}">
+                                                    {{ website.category.title() }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <select class="form-select form-select-sm status-select" 
+                                                        data-website-id="{{ website.id }}" 
+                                                        style="max-width: 120px;">
+                                                    <option value="active" {{ 'selected' if website.status == 'active' else '' }}>Activo</option>
+                                                    <option value="inactive" {{ 'selected' if website.status == 'inactive' else '' }}>Inactivo</option>
+                                                    <option value="maintenance" {{ 'selected' if website.status == 'maintenance' else '' }}>Mantenimiento</option>
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <a href="{{ website.url }}" target="_blank" class="text-info">
+                                                    <i class="fas fa-external-link-alt"></i>
+                                                </a>
+                                            </td>
+                                            <td>
+                                                <button class="btn btn-sm btn-danger" onclick="deleteWebsite({{ website.id }})">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Users Tab -->
+        <div class="tab-pane fade" id="nav-users" role="tabpanel">
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card futuristic-card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-users me-2"></i>Usuarios del Sistema</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-dark table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Usuario</th>
+                                            <th>Email</th>
+                                            <th>Tipo</th>
+                                            <th>Último Acceso</th>
+                                            <th>Fecha Registro</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for user in users %}
+                                        <tr>
+                                            <td>
+                                                <i class="fas fa-user-circle me-2"></i>
+                                                {{ user.username }}
+                                            </td>
+                                            <td>{{ user.email }}</td>
+                                            <td>
+                                                <span class="badge bg-{{ 'warning' if user.is_admin else 'info' }}">
+                                                    {{ 'Administrador' if user.is_admin else 'Usuario' }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                {% if user.last_login %}
+                                                    {{ user.last_login.strftime('%d/%m/%Y %H:%M') }}
+                                                {% else %}
+                                                    <span class="text-muted">Nunca</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ user.created_at.strftime('%d/%m/%Y') }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+{% endblock %}
