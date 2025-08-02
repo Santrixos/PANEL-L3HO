@@ -174,7 +174,7 @@
                                 </h6>
                                 <div class="api-key-container">
                                     <input type="text" id="api-key-futbol" 
-                                           value="{{ current_user.api_key if current_user.api_key else 'Generando...' }}" 
+                                           value="{{ current_user.api_key if current_user and current_user.api_key else 'Generando...' }}" 
                                            class="form-control api-key-input" readonly>
                                     <button onclick="copyApiKey('api-key-futbol')" class="btn btn-outline-primary btn-sm ms-2">
                                         <i class="fas fa-copy"></i>
@@ -184,10 +184,12 @@
                                     Para endpoints: /api/tabla, /api/equipos, /api/jugadores, etc.
                                 </small>
                                 <div class="mt-2">
+                                    {% if current_user and current_user.api_key %}
                                     <a href="/api/info?key={{ current_user.api_key }}" target="_blank" 
                                        class="btn btn-sm btn-info">
                                         <i class="fas fa-book me-1"></i>Documentación
                                     </a>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
@@ -200,7 +202,7 @@
                                 </h6>
                                 <div class="api-key-container">
                                     <input type="text" id="api-key-transmisiones" 
-                                           value="{{ current_user.api_key_transmisiones if current_user.api_key_transmisiones else 'Generando...' }}" 
+                                           value="{{ current_user.api_key_transmisiones if current_user and current_user.api_key_transmisiones else 'Generando...' }}" 
                                            class="form-control api-key-input" readonly>
                                     <button onclick="copyApiKey('api-key-transmisiones')" class="btn btn-outline-success btn-sm ms-2">
                                         <i class="fas fa-copy"></i>
@@ -210,10 +212,12 @@
                                     Para endpoints: /api/transmisiones, /api/transmisiones/detalle
                                 </small>
                                 <div class="mt-2">
+                                    {% if current_user and current_user.api_key_transmisiones %}
                                     <a href="/api/transmisiones/info?key={{ current_user.api_key_transmisiones }}" target="_blank" 
                                        class="btn btn-sm btn-success">
                                         <i class="fas fa-book me-1"></i>Documentación
                                     </a>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>

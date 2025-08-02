@@ -65,7 +65,19 @@ def dashboard():
     
     recent_websites = WebsiteControl.query.order_by(WebsiteControl.created_at.desc()).limit(5).all()
     
-    return render_template('dashboard.html', stats=stats, recent_websites=recent_websites)
+    # Obtener usuario actual
+    user = User.query.filter_by(username=session['username']).first()
+    
+    # Generar API keys si no existen
+    if user and not user.api_key:
+        user.generate_api_key()
+        db.session.commit()
+    
+    if user and not user.api_key_transmisiones:
+        user.generate_api_key_transmisiones()
+        db.session.commit()
+    
+    return render_template('dashboard.html', stats=stats, recent_websites=recent_websites, current_user=user)
 
 @app.route('/admin')
 def admin():
