@@ -1,0 +1,46 @@
+Hola, este es mi proyecto privado **PANEL-L3HO** (Flask + SQLite). Ya tengo login, modelos (User, ApiKey, WebsiteControl) y dashboard funcionando.
+
+Anteriormente construimos la **API de fútbol** con datos reales de los 18 equipos de la Liga MX. Ahora quiero que completes lo siguiente:
+1. API de transmisiones de fútbol en vivo**
+
+Quiero una API **completamente separada de la API de fútbol**, con **su propia clave API distinta**. Esta API debe devolver datos en tiempo real de partidos en vivo.
+
+1. Crear la clave API exclusiva para transmisiones (diferente a la de fútbol) y validarla igual que la de fútbol.
+2. Crear rutas de esta API:
+
+   * `/api/transmisiones`: devolver todos los partidos en vivo, con datos reales: equipos, marcador, minuto, estado (en vivo/medio tiempo/finalizado), estadio y canal de transmisión si está disponible.
+   * `/api/transmisiones/detalle?id=...`: devolver más información de un partido específico, como goles (autor y minuto), tarjetas, estadísticas (posesión, tiros, faltas, etc.) y enlaces de transmisión o fuentes abiertas donde se pueda seguir el partido.
+3. Toda la información debe ser **real**, obtenida de fuentes como:
+
+   * **ligamx.net**
+   * **ESPN (en vivo)**
+   * **OneFootball**
+   * **Google (paneles de resultados en vivo)**
+   * O cualquier fuente pública confiable de datos en tiempo real.
+4. Organizar el scraping en un archivo separado: `services/transmisiones.py`.
+5. Las rutas deben ir en `routes.py` o en un Blueprint dedicado, separado de la API de fútbol.
+
+2. Ajustar el proyecto para que funcione bien en Termux**
+
+1. Deja el proyecto listo para correr en **Termux** con el mismo comando simple:
+
+bash
+   python main.py
+   ```
+2. Asegúrate de que no dependa de librerías incompatibles con Termux (usa Flask, requests, BeautifulSoup4, etc. que funcionan bien).
+
+3. Si necesitas librerías adicionales (por ejemplo para scraping), crea un `requirements.txt` con todas las dependencias correctas.
+
+4. Si es necesario, agrega un `run.sh` con los pasos para instalar dependencias y ejecutar el proyecto en Termux.
+3. Panel admin**
+
+1. Desde el dashboard admin debo poder ver **mis dos claves API** (la de fútbol y la de transmisiones) y copiarlas fácilmente.
+2. Si alguna clave no existe, se debe generar automáticamente.
+3. No olvides dejarlo todo protegido: el panel y las APIs son **solo para mí**.
+IMPORTANTE**
+
+* Todo debe ser real, sin datos inventados.
+* Toda la información en tiempo real debe obtenerse de fuentes confiables como las mencionadas.
+* Respeta mi estructura de Flask + SQLite.
+* La API debe estar completamente funcional tanto en **Replit** como en **Termux**.
+*

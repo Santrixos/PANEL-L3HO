@@ -3,6 +3,7 @@ from werkzeug.security import generate_password_hash
 from app import app, db
 from models import User, ApiKey, WebsiteControl
 from services.futbol import FutbolService
+from services.transmisiones import TransmisionesService
 from datetime import datetime
 import requests
 import os
@@ -188,6 +189,29 @@ def require_api_key(f):
             return jsonify({
                 'error': 'API Key inválida',
                 'message': 'La clave proporcionada no es válida'
+            }), 403
+        
+        # Pasar el usuario al endpoint
+        return f(user, *args, **kwargs)
+    return decorated_function
+
+def require_transmisiones_api_key(f):
+    """Decorator para proteger rutas de API de transmisiones con clave separada"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        api_key = request.args.get('key')
+        if not api_key:
+            return jsonify({
+                'error': 'API Key de transmisiones requerida',
+                'message': 'Incluye el parámetro ?key=TU_API_KEY_TRANSMISIONES en la URL'
+            }), 401
+        
+        # Verificar que la API key de transmisiones existe y pertenece a un usuario válido
+        user = User.query.filter_by(api_key_transmisiones=api_key).first()
+        if not user:
+            return jsonify({
+                'error': 'API Key de transmisiones inválida',
+                'message': 'La clave proporcionada no es válida para transmisiones'
             }), 403
         
         # Pasar el usuario al endpoint
@@ -557,6 +581,138 @@ def api_info(user):
     })
 
 # ========================================
+# API PRIVADA DE TRANSMISIONES EN VIVO
+# ========================================
+
+@app.route('/api/transmisiones')
+@require_transmisiones_api_key
+def api_transmisiones_en_vivo(user):
+    """API Transmisiones: Obtiene todos los partidos en vivo con datos reales"""
+    try:
+        transmisiones_service = TransmisionesService()
+        partidos = transmisiones_service.get_partidos_en_vivo()
+        
+        return jsonify({
+            'success': True,
+            'data': partidos,
+            'api_version': '1.0',
+            'api_type': 'transmisiones',
+            'usuario': user.username,
+            'timestamp': datetime.now().isoformat()
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': 'Error interno del servidor',
+            'message': str(e)
+        }), 500
+
+@app.route('/api/transmisiones/detalle')
+@require_transmisiones_api_key
+def api_transmisiones_detalle(user):
+    """API Transmisiones: Obtiene detalles completos de un partido específico"""
+    partido_id = request.args.get('id')
+    if not partido_id:
+        return jsonify({
+            'error': 'Parámetro requerido',
+            'message': 'Incluye el parámetro ?id=ID_PARTIDO para obtener detalles'
+        }), 400
+    
+    try:
+        transmisiones_service = TransmisionesService()
+        detalle = transmisiones_service.get_detalle_partido(partido_id)
+        
+        return jsonify({
+            'success': True,
+            'data': detalle,
+            'api_version': '1.0',
+            'api_type': 'transmisiones',
+            'usuario': user.username,
+            'timestamp': datetime.now().isoformat()
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': 'Error interno del servidor',
+            'message': str(e)
+        }), 500
+
+@app.route('/api/transmisiones/info')
+@require_transmisiones_api_key
+def api_transmisiones_info(user):
+    """API Transmisiones: Información y documentación de la API de transmisiones"""
+    return jsonify({
+        'api_name': 'Panel L3HO - API Privada de Transmisiones en Vivo',
+        'version': '1.0',
+        'descripcion': 'API especializada en datos en tiempo real de partidos de Liga MX',
+        'liga': 'Liga MX',
+        'temporada': '2024-25',
+        'tipo_datos': 'Tiempo real',
+        'fuentes_datos': [
+            'ESPN México (En Vivo)',
+            'Liga MX Oficial (Resultados en vivo)', 
+            'OneFootball',
+            'Google Sports'
+        ],
+        'endpoints': {
+            '/api/transmisiones': {
+                'descripcion': 'Lista todos los partidos en vivo y estados actuales',
+                'parametros': 'key (requerido)',
+                'ejemplo': '/api/transmisiones?key=TU_API_KEY_TRANSMISIONES',
+                'datos_incluidos': [
+                    'Partidos en vivo con marcador actual',
+                    'Minuto del partido',
+                    'Estado (en vivo, medio tiempo, finalizado)',
+                    'Estadio y canal de transmisión',
+                    'Partidos próximos y recientes del día'
+                ]
+            },
+            '/api/transmisiones/detalle': {
+                'descripcion': 'Detalles completos de un partido específico',
+                'parametros': 'key (requerido), id (requerido)',
+                'ejemplo': '/api/transmisiones/detalle?id=PARTIDO_ID&key=TU_API_KEY',
+                'datos_incluidos': [
+                    'Estadísticas detalladas (posesión, tiros, faltas)',
+                    'Eventos del partido (goles, tarjetas)',
+                    'Información de transmisión completa',
+                    'Enlaces de seguimiento en vivo',
+                    'Canales de TV y streaming disponibles'
+                ]
+            },
+            '/api/transmisiones/info': {
+                'descripcion': 'Información y documentación de la API',
+                'parametros': 'key (requerido)',
+                'ejemplo': '/api/transmisiones/info?key=TU_API_KEY'
+            }
+        },
+        'diferencias_api_futbol': {
+            'enfoque': 'Datos en tiempo real vs datos históricos/estadísticos',
+            'actualizacion': 'Cada minuto vs diaria',
+            'clave_api': 'Separada e independiente',
+            'uso_recomendado': 'Seguimiento de partidos en vivo'
+        },
+        'autenticacion': {
+            'tipo': 'API Key personal para transmisiones',
+            'parametro': 'key',
+            'formato': '?key=TU_API_KEY_TRANSMISIONES',
+            'obtencion': 'Panel de administración - sección separada'
+        },
+        'canales_transmision': [
+            'FOX Sports México',
+            'ESPN México',
+            'TUDN',
+            'TV Azteca',
+            'Televisa Deportes',
+            'Claro Sports'
+        ],
+        'usuario_actual': user.username,
+        'api_key_transmisiones': user.api_key_transmisiones,
+        'solicitudes_realizadas': 'Ilimitadas',
+        'actualizacion_datos': 'Tiempo real cada minuto',
+        'timestamp': datetime.now().isoformat()
+    })
+
+# ========================================
 # GESTIÓN DE API KEYS
 # ========================================
 
@@ -572,9 +728,13 @@ def admin_my_api_key():
         flash('Usuario no encontrado.', 'error')
         return redirect(url_for('dashboard'))
     
-    # Generar API key si no existe
+    # Generar API keys si no existen
     if not user.api_key:
         user.generate_api_key()
+        db.session.commit()
+    
+    if not user.api_key_transmisiones:
+        user.generate_api_key_transmisiones()
         db.session.commit()
         flash('API Key generada exitosamente.', 'success')
     

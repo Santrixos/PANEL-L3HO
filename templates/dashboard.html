@@ -153,6 +153,95 @@
         </div>
     </div>
 
+    <!-- API Keys Section (Admin Only) -->
+    {% if session.is_admin %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card futuristic-card api-keys-card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-key me-2"></i>
+                        Mis Claves API Privadas
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="api-key-section">
+                                <h6 class="text-primary mb-3">
+                                    <i class="fas fa-futbol me-2"></i>
+                                    API de Fútbol (Liga MX)
+                                </h6>
+                                <div class="api-key-container">
+                                    <input type="text" id="api-key-futbol" 
+                                           value="{{ current_user.api_key if current_user.api_key else 'Generando...' }}" 
+                                           class="form-control api-key-input" readonly>
+                                    <button onclick="copyApiKey('api-key-futbol')" class="btn btn-outline-primary btn-sm ms-2">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                                <small class="text-muted d-block mt-2">
+                                    Para endpoints: /api/tabla, /api/equipos, /api/jugadores, etc.
+                                </small>
+                                <div class="mt-2">
+                                    <a href="/api/info?key={{ current_user.api_key }}" target="_blank" 
+                                       class="btn btn-sm btn-info">
+                                        <i class="fas fa-book me-1"></i>Documentación
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="api-key-section">
+                                <h6 class="text-success mb-3">
+                                    <i class="fas fa-broadcast-tower me-2"></i>
+                                    API de Transmisiones en Vivo
+                                </h6>
+                                <div class="api-key-container">
+                                    <input type="text" id="api-key-transmisiones" 
+                                           value="{{ current_user.api_key_transmisiones if current_user.api_key_transmisiones else 'Generando...' }}" 
+                                           class="form-control api-key-input" readonly>
+                                    <button onclick="copyApiKey('api-key-transmisiones')" class="btn btn-outline-success btn-sm ms-2">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                                <small class="text-muted d-block mt-2">
+                                    Para endpoints: /api/transmisiones, /api/transmisiones/detalle
+                                </small>
+                                <div class="mt-2">
+                                    <a href="/api/transmisiones/info?key={{ current_user.api_key_transmisiones }}" target="_blank" 
+                                       class="btn btn-sm btn-success">
+                                        <i class="fas fa-book me-1"></i>Documentación
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <h6><i class="fas fa-info-circle me-2"></i>Diferencias entre las APIs:</h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <strong>API de Fútbol:</strong><br>
+                                        <small>Datos históricos, estadísticas, plantillas, información detallada de equipos</small>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>API de Transmisiones:</strong><br>
+                                        <small>Datos en tiempo real, partidos en vivo, marcadores, eventos del partido</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Recent Activity -->
     <div class="row">
         <div class="col-12">
@@ -250,5 +339,33 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('Auto-refresh triggered');
     }, 30000);
 });
+
+// Function to copy API key to clipboard
+function copyApiKey(inputId) {
+    const input = document.getElementById(inputId);
+    input.select();
+    input.setSelectionRange(0, 99999); // For mobile devices
+    
+    navigator.clipboard.writeText(input.value).then(function() {
+        // Show success feedback
+        const button = input.nextElementSibling;
+        const originalIcon = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-check"></i>';
+        button.classList.remove('btn-outline-primary', 'btn-outline-success');
+        button.classList.add('btn-success');
+        
+        setTimeout(() => {
+            button.innerHTML = originalIcon;
+            button.classList.remove('btn-success');
+            if (inputId.includes('transmisiones')) {
+                button.classList.add('btn-outline-success');
+            } else {
+                button.classList.add('btn-outline-primary');
+            }
+        }, 2000);
+    }).catch(function() {
+        alert('Error al copiar la clave. Selecciona y copia manualmente.');
+    });
+}
 </script>
 {% endblock %}
