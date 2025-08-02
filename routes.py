@@ -65,17 +65,24 @@ def dashboard():
     
     recent_websites = WebsiteControl.query.order_by(WebsiteControl.created_at.desc()).limit(5).all()
     
-    # Obtener usuario actual
-    user = User.query.filter_by(username=session['username']).first()
+    # Obtener usuario actual usando el user_id de la sesión
+    user = User.query.get(session.get('user_id'))
     
     # Generar API keys si no existen
-    if user and not user.api_key:
-        user.generate_api_key()
-        db.session.commit()
-    
-    if user and not user.api_key_transmisiones:
-        user.generate_api_key_transmisiones()
-        db.session.commit()
+    if user:
+        changed = False
+        if not user.api_key:
+            user.generate_api_key()
+            changed = True
+        
+        if not user.api_key_transmisiones:
+            user.generate_api_key_transmisiones()
+            changed = True
+        
+        if changed:
+            db.session.commit()
+            # Refrescar el objeto después del commit
+            db.session.refresh(user)
     
     return render_template('dashboard.html', stats=stats, recent_websites=recent_websites, current_user=user)
 
