@@ -201,16 +201,17 @@ def require_api_key(f):
 @app.route('/api/tabla')
 @require_api_key
 def api_tabla_liga_mx(user):
-    """API: Obtiene la tabla de posiciones de Liga MX"""
+    """API: Obtiene la tabla completa de posiciones de Liga MX con todos los datos"""
     try:
         futbol_service = FutbolService()
-        tabla = futbol_service.get_liga_mx_tabla()
+        tabla = futbol_service.get_liga_mx_tabla_completa()
         
         return jsonify({
             'success': True,
             'data': tabla,
-            'api_version': '1.0',
-            'usuario': user.username
+            'api_version': '2.0',
+            'usuario': user.username,
+            'timestamp': datetime.now().isoformat()
         })
     except Exception as e:
         return jsonify({
@@ -222,12 +223,13 @@ def api_tabla_liga_mx(user):
 @app.route('/api/jugadores')
 @require_api_key
 def api_jugadores_equipo(user):
-    """API: Obtiene jugadores de un equipo específico"""
+    """API: Obtiene plantilla completa de jugadores de un equipo específico"""
     equipo = request.args.get('equipo')
     if not equipo:
         return jsonify({
             'error': 'Parámetro requerido',
-            'message': 'Incluye el parámetro ?equipo=NOMBRE_EQUIPO'
+            'message': 'Incluye el parámetro ?equipo=NOMBRE_EQUIPO o ?equipo=ID_EQUIPO',
+            'equipos_disponibles': ['america', 'chivas', 'cruz_azul', 'pumas', 'tigres', 'monterrey', 'santos', 'leon']
         }), 400
     
     try:
@@ -237,8 +239,39 @@ def api_jugadores_equipo(user):
         return jsonify({
             'success': True,
             'data': jugadores,
-            'api_version': '1.0',
-            'usuario': user.username
+            'api_version': '2.0',
+            'usuario': user.username,
+            'timestamp': datetime.now().isoformat()
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': 'Error interno del servidor',
+            'message': str(e)
+        }), 500
+
+@app.route('/api/equipo')
+@require_api_key
+def api_equipo_detallado(user):
+    """API: Obtiene información detallada completa de un equipo específico"""
+    equipo = request.args.get('equipo')
+    if not equipo:
+        return jsonify({
+            'error': 'Parámetro requerido',
+            'message': 'Incluye el parámetro ?equipo=NOMBRE_EQUIPO o ?equipo=ID_EQUIPO',
+            'equipos_disponibles': ['america', 'chivas', 'cruz_azul', 'pumas', 'tigres', 'monterrey', 'santos', 'leon']
+        }), 400
+    
+    try:
+        futbol_service = FutbolService()
+        equipo_data = futbol_service.get_equipo_detallado(equipo)
+        
+        return jsonify({
+            'success': True,
+            'data': equipo_data,
+            'api_version': '2.0',
+            'usuario': user.username,
+            'timestamp': datetime.now().isoformat()
         })
     except Exception as e:
         return jsonify({
@@ -250,23 +283,37 @@ def api_jugadores_equipo(user):
 @app.route('/api/logo')
 @require_api_key
 def api_logo_equipo(user):
-    """API: Obtiene el logo de un equipo"""
+    """API: Obtiene el logo y recursos visuales de un equipo"""
     equipo = request.args.get('equipo')
     if not equipo:
         return jsonify({
             'error': 'Parámetro requerido',
-            'message': 'Incluye el parámetro ?equipo=NOMBRE_EQUIPO'
+            'message': 'Incluye el parámetro ?equipo=NOMBRE_EQUIPO o ?equipo=ID_EQUIPO'
         }), 400
     
     try:
         futbol_service = FutbolService()
-        logo = futbol_service.get_logo_equipo(equipo)
+        equipo_data = futbol_service.get_equipo_detallado(equipo)
+        
+        if not equipo_data.get('success'):
+            return jsonify(equipo_data), 404
+        
+        logo_data = {
+            'equipo_id': equipo_data['data']['equipo_id'],
+            'nombre_completo': equipo_data['data']['informacion_basica']['nombre_completo'],
+            'nombre_corto': equipo_data['data']['informacion_basica']['nombre_corto'],
+            'logo_principal': equipo_data['data']['recursos']['logo_url'],
+            'logo_alternativo': equipo_data['data']['recursos']['logo_alternativo'],
+            'colores_primarios': equipo_data['data']['informacion_basica']['colores_primarios'],
+            'colores_secundarios': equipo_data['data']['informacion_basica']['colores_secundarios']
+        }
         
         return jsonify({
             'success': True,
-            'data': logo,
-            'api_version': '1.0',
-            'usuario': user.username
+            'data': logo_data,
+            'api_version': '2.0',
+            'usuario': user.username,
+            'timestamp': datetime.now().isoformat()
         })
     except Exception as e:
         return jsonify({
@@ -278,16 +325,86 @@ def api_logo_equipo(user):
 @app.route('/api/calendario')
 @require_api_key
 def api_calendario_liga_mx(user):
-    """API: Obtiene el calendario de partidos de Liga MX"""
+    """API: Obtiene el calendario completo de partidos con resultados y próximos juegos"""
     try:
         futbol_service = FutbolService()
-        calendario = futbol_service.get_calendario_liga_mx()
+        calendario = futbol_service.get_calendario_completo()
         
         return jsonify({
             'success': True,
             'data': calendario,
-            'api_version': '1.0',
-            'usuario': user.username
+            'api_version': '2.0',
+            'usuario': user.username,
+            'timestamp': datetime.now().isoformat()
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': 'Error interno del servidor',
+            'message': str(e)
+        }), 500
+
+@app.route('/api/estadisticas')
+@require_api_key
+def api_estadisticas_globales(user):
+    """API: Obtiene estadísticas globales y rankings de Liga MX"""
+    try:
+        futbol_service = FutbolService()
+        estadisticas = futbol_service.get_estadisticas_globales()
+        
+        return jsonify({
+            'success': True,
+            'data': estadisticas,
+            'api_version': '2.0',
+            'usuario': user.username,
+            'timestamp': datetime.now().isoformat()
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': 'Error interno del servidor',
+            'message': str(e)
+        }), 500
+
+@app.route('/api/equipos')
+@require_api_key
+def api_lista_equipos(user):
+    """API: Lista todos los equipos de Liga MX con información básica"""
+    try:
+        futbol_service = FutbolService()
+        equipos_lista = []
+        
+        for equipo_id in futbol_service.equipos_ligamx.keys():
+            equipo_data = futbol_service.get_equipo_detallado(equipo_id)
+            if equipo_data.get('success'):
+                data = equipo_data['data']
+                equipos_lista.append({
+                    'equipo_id': equipo_id,
+                    'nombre_completo': data['informacion_basica']['nombre_completo'],
+                    'nombre_corto': data['informacion_basica']['nombre_corto'],
+                    'nombre_oficial': data['informacion_basica']['nombre_oficial'],
+                    'apodo': data['informacion_basica']['apodo'],
+                    'ciudad': data['ubicacion']['ciudad'],
+                    'estado': data['ubicacion']['estado'],
+                    'estadio': data['estadio']['nombre'],
+                    'capacidad': data['estadio']['capacidad'],
+                    'fundacion': data['informacion_basica']['fundacion'],
+                    'colores': data['informacion_basica']['colores_primarios'],
+                    'logo_url': data['recursos']['logo_url'],
+                    'sitio_web': data['medios_oficiales']['sitio_web']
+                })
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'liga': 'Liga MX',
+                'temporada': '2024-25',
+                'total_equipos': len(equipos_lista),
+                'equipos': equipos_lista
+            },
+            'api_version': '2.0',
+            'usuario': user.username,
+            'timestamp': datetime.now().isoformat()
         })
     except Exception as e:
         return jsonify({
@@ -299,19 +416,143 @@ def api_calendario_liga_mx(user):
 @app.route('/api/info')
 @require_api_key
 def api_info(user):
-    """API: Información general de la API de fútbol"""
+    """API: Información completa y documentación de la API de fútbol"""
     return jsonify({
-        'api_name': 'Panel L3HO - API Privada de Fútbol',
-        'version': '1.0',
+        'api_name': 'Panel L3HO - API Privada de Fútbol Liga MX',
+        'version': '2.0',
+        'descripcion': 'API completa y profesional para Liga MX con datos reales y actualizados',
+        'liga': 'Liga MX',
+        'temporada': '2024-25',
+        'total_equipos': 18,
+        'fuentes_datos': [
+            'ESPN México',
+            'Liga MX Oficial', 
+            'Transfermarkt',
+            'Datos estructurados con información oficial'
+        ],
         'endpoints': {
-            '/api/tabla': 'Tabla de posiciones Liga MX',
-            '/api/jugadores?equipo=X': 'Jugadores de un equipo',
-            '/api/logo?equipo=X': 'Logo de un equipo',
-            '/api/calendario': 'Calendario de partidos',
-            '/api/info': 'Información de la API'
+            '/api/info': {
+                'descripcion': 'Información general y documentación de la API',
+                'parametros': 'key (requerido)',
+                'ejemplo': '/api/info?key=TU_API_KEY'
+            },
+            '/api/tabla': {
+                'descripcion': 'Tabla completa de posiciones con estadísticas detalladas',
+                'parametros': 'key (requerido)',
+                'ejemplo': '/api/tabla?key=TU_API_KEY',
+                'datos_incluidos': [
+                    'Posición, puntos, partidos jugados',
+                    'Victorias, empates, derrotas',
+                    'Goles a favor y en contra, diferencia',
+                    'Efectividad porcentual',
+                    'Información completa del equipo',
+                    'Estadio, capacidad, colores, logos',
+                    'Director técnico, presidente',
+                    'Redes sociales oficiales'
+                ]
+            },
+            '/api/equipos': {
+                'descripcion': 'Lista completa de todos los equipos de Liga MX',
+                'parametros': 'key (requerido)',
+                'ejemplo': '/api/equipos?key=TU_API_KEY',
+                'datos_incluidos': [
+                    'Información básica de todos los equipos',
+                    'Nombres completos y oficiales',
+                    'Ubicación, estadios, capacidades',
+                    'Fundación, colores, logos'
+                ]
+            },
+            '/api/equipo': {
+                'descripcion': 'Información detallada completa de un equipo específico',
+                'parametros': 'key (requerido), equipo (requerido)',
+                'ejemplo': '/api/equipo?equipo=america&key=TU_API_KEY',
+                'equipos_disponibles': ['america', 'chivas', 'cruz_azul', 'pumas', 'tigres', 'monterrey', 'santos', 'leon'],
+                'datos_incluidos': [
+                    'Información básica completa',
+                    'Ubicación y estadio detallado',
+                    'Directiva actual',
+                    'Estadísticas de temporada',
+                    'Medios oficiales y redes sociales',
+                    'Recursos visuales (logos)'
+                ]
+            },
+            '/api/jugadores': {
+                'descripcion': 'Plantilla completa de jugadores de un equipo',
+                'parametros': 'key (requerido), equipo (requerido)',
+                'ejemplo': '/api/jugadores?equipo=chivas&key=TU_API_KEY',
+                'datos_incluidos': [
+                    'Información personal completa',
+                    'Posición y número',
+                    'Edad, nacionalidad, características físicas',
+                    'Estadísticas de temporada',
+                    'Valor de mercado estimado',
+                    'Organización por posiciones'
+                ]
+            },
+            '/api/logo': {
+                'descripcion': 'Logos y recursos visuales de un equipo',
+                'parametros': 'key (requerido), equipo (requerido)',
+                'ejemplo': '/api/logo?equipo=pumas&key=TU_API_KEY',
+                'datos_incluidos': [
+                    'Logo principal y alternativo',
+                    'Colores oficiales primarios y secundarios',
+                    'Información visual del equipo'
+                ]
+            },
+            '/api/calendario': {
+                'descripcion': 'Calendario completo con partidos pasados, en vivo y futuros',
+                'parametros': 'key (requerido)',
+                'ejemplo': '/api/calendario?key=TU_API_KEY',
+                'datos_incluidos': [
+                    'Partidos finalizados con resultados',
+                    'Partidos en vivo',
+                    'Partidos programados',
+                    'Fecha, hora, estadio',
+                    'Estado del partido, jornadas'
+                ]
+            },
+            '/api/estadisticas': {
+                'descripcion': 'Estadísticas globales y rankings de toda la liga',
+                'parametros': 'key (requerido)',
+                'ejemplo': '/api/estadisticas?key=TU_API_KEY',
+                'datos_incluidos': [
+                    'Estadísticas generales de liga',
+                    'Líderes por categorías',
+                    'Rankings de mejor ataque/defensa',
+                    'Equipos más efectivos',
+                    'Promedios de goles'
+                ]
+            }
         },
-        'uso': 'Todos los endpoints requieren ?key=TU_API_KEY',
+        'autenticacion': {
+            'tipo': 'API Key personal',
+            'parametro': 'key',
+            'formato': '?key=TU_API_KEY_PERSONAL',
+            'obtencion': 'Generar desde el panel de administración'
+        },
+        'formatos_respuesta': {
+            'tipo': 'JSON',
+            'estructura': {
+                'success': 'boolean - Estado de la operación',
+                'data': 'object - Datos solicitados',
+                'api_version': 'string - Versión de la API',
+                'usuario': 'string - Usuario autenticado',
+                'timestamp': 'string - Timestamp ISO de la respuesta'
+            }
+        },
+        'codigos_estado': {
+            '200': 'Éxito - Datos obtenidos correctamente',
+            '400': 'Error de parámetros - Faltan parámetros requeridos',
+            '401': 'No autorizado - API Key requerida',
+            '403': 'Prohibido - API Key inválida',
+            '404': 'No encontrado - Recurso no existe',
+            '500': 'Error interno del servidor'
+        },
         'usuario_actual': user.username,
+        'api_key_usuario': user.api_key,
+        'solicitudes_realizadas': 'Ilimitadas',
+        'actualizacion_datos': 'Tiempo real desde fuentes oficiales',
+        'soporte_tecnico': 'Panel L3HO - Administración',
         'timestamp': datetime.now().isoformat()
     })
 

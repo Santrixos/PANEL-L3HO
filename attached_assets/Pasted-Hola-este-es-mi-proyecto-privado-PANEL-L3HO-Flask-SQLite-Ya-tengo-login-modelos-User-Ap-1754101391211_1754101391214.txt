@@ -1,0 +1,41 @@
+Hola, este es mi proyecto privado **PANEL-L3HO** (Flask + SQLite). Ya tengo login, modelos (User, ApiKey, WebsiteControl) y dashboard funcionando.
+
+Quiero que construyas una **API completa y profesional de fútbol** para la **Liga MX**, totalmente privada, con datos **reales y actualizados de los 18 equipos**.
+1. API de fútbol completa (todos los datos posibles de los 18 equipos)**
+
+Debes crear una API con rutas bien organizadas, cada una protegida por **una API Key única**. Cada ruta debe devolver datos **reales y completos** de la Liga MX:
+
+1. **Tabla de posiciones:** devolver la tabla completa de los 18 equipos con todos los datos posibles: posición, nombre completo, nombre corto, logo oficial, puntos, partidos jugados, victorias, empates, derrotas, goles a favor y en contra, diferencia de goles, porcentaje de efectividad y última fecha de actualización.
+2. **Información de cada equipo:** devolver datos detallados de un equipo específico: nombre, logo, ciudad, estadio (nombre, capacidad, ubicación), director técnico, redes sociales oficiales y enlace a la plantilla de jugadores.
+3. **Jugadores de cada equipo:** devolver datos completos de todos los jugadores de un equipo: nombre completo, posición, número, edad, nacionalidad, foto, estadísticas (partidos jugados, goles, asistencias, minutos, tarjetas amarillas y rojas, pases completos, tiros, etc.).
+4. **Calendario y resultados:** devolver partidos pasados, en vivo y futuros con fecha, hora, estadio, estado (programado, en vivo, terminado), marcador y canal de transmisión si está disponible.
+5. **Estadísticas globales:** devolver goleadores de la liga, máximos asistentes, porteros con más porterías en cero, equipos con más victorias, ranking fair play y cualquier otra estadística disponible.
+2. Fuentes de datos**
+
+Toda la información debe obtenerse de fuentes **reales y confiables**:
+
+* **ligamx.net (sitio oficial)**
+* **ESPN ([https://espn.com.mx/futbol/posiciones](https://espn.com.mx/futbol/posiciones))**
+* **OneFootball**
+* **Transfermarkt (datos de jugadores, estadísticas, fichajes)**
+* **Google (paneles de resultados y datos complementarios si es necesario)**
+
+No quiero datos inventados ni estáticos. Todo debe ser scraping o consumo de APIs públicas de estas fuentes para que la información esté siempre actualizada.
+ **3. Organización del código**
+
+1. Toda la lógica de scraping debe estar en un archivo separado llamado `services/futbol.py`.
+2. Las rutas de la API deben estar en `routes.py` usando Blueprints.
+3. La validación de la API Key debe hacerse usando el modelo `User` (campo `apikey`).
+4. Crear funciones de utilidad en `utils.py` para generar y validar claves.
+5. La API debe estar lista para producción y solo accesible por mi clave privada.
+
+4. Extensiones futuras**
+
+Una vez termines la API de fútbol, necesito que me ayudes a crear **una API separada para transmisiones de fútbol en tiempo real**, con su propia clave API distinta. Esa API debe devolver partidos en vivo con enlaces de transmisión, datos en tiempo real como goles, minutos, tarjetas y marcadores.
+IMPORTANTE**
+
+* Toda la información debe ser **real y actualizada** de los **18 equipos de la Liga MX**.
+* No uses datos ficticios ni de ejemplo.
+* Respeta mi estructura actual de Flask + SQLite.
+* La API debe quedar completamente funcional para usarse desde mis otras webs y apps.
+*
