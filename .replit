@@ -2,7 +2,7 @@ modules = ["python-3.11", "web", "nodejs-20", "bash"]
 
 [nix]
 channel = "stable-25_05"
-packages = ["ffmpeg-full", "openssl", "postgresql", "xcodebuild", "zlib", "ffmpeg"]
+packages = ["ffmpeg", "ffmpeg-full", "openssl", "postgresql", "xcodebuild", "zlib"]
 
 [deployment]
 deploymentTarget = "autoscale"

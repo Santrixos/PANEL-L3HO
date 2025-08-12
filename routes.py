@@ -1436,12 +1436,14 @@ def get_error_rates_stats():
 
 # ==================== API PROFESIONAL DE MÚSICA ====================
 
-# Importar servicio de música personalizado
+# Importar servicios de música (API y Scraping)
 from services.musica import MusicService
+from services.scraping_musica import MusicScrapingService
 from utils import cache_manager, audio_converter, api_validator, file_manager
 
-# Inicializar servicio de música
+# Inicializar servicios de música
 music_service = MusicService()
+scraping_service = MusicScrapingService()
 
 def configure_music_apis():
     """Configurar todas las APIs de música desde la base de datos"""
@@ -1499,8 +1501,12 @@ def api_music_search_songs(user):
             cached_result['from_cache'] = True
             return jsonify(cached_result)
         
-        # Buscar canciones
-        result = music_service.search_songs(query, limit)
+        # Buscar canciones usando SCRAPING REAL como prioridad
+        result = scraping_service.search_songs(query, limit)
+        
+        # Si scraping falla, fallback a APIs oficiales
+        if not result['success']:
+            result = music_service.search_songs(query, limit)
         
         if result['success']:
             # Guardar en caché
@@ -1547,8 +1553,12 @@ def api_music_search_albums(user):
             cached_result['from_cache'] = True
             return jsonify(cached_result)
         
-        # Buscar álbumes
-        result = music_service.search_albums(query, limit)
+        # Buscar álbumes usando SCRAPING REAL como prioridad
+        result = scraping_service.search_albums(query, limit)
+        
+        # Si scraping falla, fallback a APIs oficiales
+        if not result['success']:
+            result = music_service.search_albums(query, limit)
         
         if result['success']:
             cache_manager.cache_data(cache_key, result)
@@ -1586,8 +1596,12 @@ def api_music_charts(user):
             cached_result['from_cache'] = True
             return jsonify(cached_result)
         
-        # Obtener charts
-        result = music_service.get_top_charts(country, chart_type, limit)
+        # Obtener charts usando SCRAPING REAL como prioridad
+        result = scraping_service.get_top_charts(country, limit)
+        
+        # Si scraping falla, fallback a APIs oficiales
+        if not result['success']:
+            result = music_service.get_top_charts(country, chart_type, limit)
         
         if result['success']:
             cache_manager.cache_data(cache_key, result)
@@ -1665,8 +1679,12 @@ def api_music_lyrics(user):
             cached_result['from_cache'] = True
             return jsonify(cached_result)
         
-        # Obtener letras
-        result = music_service.get_song_lyrics(song_title, artist_name)
+        # Obtener letras usando SCRAPING REAL como prioridad
+        result = scraping_service.get_song_lyrics(song_title, artist_name)
+        
+        # Si scraping falla, fallback a APIs oficiales
+        if not result['success']:
+            result = music_service.get_song_lyrics(song_title, artist_name)
         
         if result['success']:
             cache_manager.cache_data(cache_key, result)
@@ -1712,8 +1730,12 @@ def api_music_download(user):
         
         configure_music_apis()
         
-        # Descargar canción
-        result = music_service.download_song(song_data, quality)
+        # Descargar canción usando SCRAPING REAL como prioridad
+        result = scraping_service.download_song(song_data, quality)
+        
+        # Si scraping falla, fallback a APIs oficiales
+        if not result['success']:
+            result = music_service.download_song(song_data, quality)
         
         if result['success']:
             record_api_usage(user.api_key, '/api/music/download', user.id, request.remote_addr)
@@ -1779,8 +1801,10 @@ def api_music_cache_stats(user):
         # Estadísticas del caché
         cache_stats = cache_manager.get_cache_stats()
         
-        # Estadísticas de archivos de música
-        music_stats = music_service.get_cache_stats()
+        # Estadísticas de archivos de música (scraping + API)
+        music_stats = scraping_service.get_cache_stats()
+        if not music_stats['success']:
+            music_stats = music_service.get_cache_stats()
         
         # Uso de disco
         disk_usage = file_manager.get_disk_usage()
@@ -1824,7 +1848,7 @@ def api_music_cache_clear(user):
         data = request.get_json() or {}
         pattern = data.get('pattern')  # Patrón opcional para limpiar caché específico
         
-        # Limpiar caché
+        # Limpiar caché del sistema completo (scraping + API)
         cleared = cache_manager.clear_cache(pattern)
         
         # Limpiar archivos temporales
@@ -1862,33 +1886,35 @@ def api_music_cache_clear(user):
 def api_music_info(user):
     """API: Información y documentación completa de la API de música"""
     return jsonify({
-        'api_name': 'Panel L3HO - API Profesional de Música',
+        'api_name': 'Panel L3HO - API Profesional de Música con Scraping Real',
         'version': '1.0',
-        'descripcion': 'API completa para búsqueda, descarga y gestión de música con múltiples fuentes',
-        'fuentes_principales': [
-            'Spotify API',
-            'YouTube Data API', 
-            'Last.fm API',
-            'Genius API',
-            'Deezer API'
+        'descripcion': 'API completa para búsqueda, descarga y gestión de música usando scraping real de múltiples fuentes',
+        'fuentes_principales_scraping': [
+            'Scraping YouTube Music (resultados reales)',
+            'Scraping SoundCloud (catálogo completo)',
+            'Scraping Jamendo (música libre)',
+            'Scraping Audiomack (artistas independientes)',
+            'Scraping Musixmatch (letras)',
+            'Scraping Bandcamp (música independiente)'
         ],
-        'fuentes_respaldo': [
-            'SoundCloud API',
-            'Audiomack API',
-            'Jamendo API',
-            'Discogs API',
-            'Musixmatch API',
-            'Vagalume API'
+        'fuentes_respaldo_apis': [
+            'Spotify API (fallback)',
+            'YouTube Data API (fallback)', 
+            'Last.fm API (fallback)',
+            'Genius API (fallback)',
+            'Deezer API (fallback)',
+            'Vagalume API (fallback)'
         ],
         'formatos_descarga': ['WAV (Alta calidad)', 'MP3 (320k optimizado)'],
         'caracteristicas': [
-            'Búsqueda inteligente con fallback automático',
-            'Descargas automáticas en alta calidad',
-            'Sistema de caché para optimizar rendimiento',
-            'Letras de canciones desde múltiples fuentes',
-            'Información completa de artistas y álbumes',
-            'Top charts globales y por país',
-            'Conversión automática entre formatos'
+            'Scraping real como fuente principal (sin límites de API)',
+            'Fallback automático a APIs oficiales si scraping falla', 
+            'Descargas directas desde fuentes públicas',
+            'Sistema de caché inteligente para evitar re-scraping',
+            'Letras extraídas por scraping de múltiples sitios',
+            'Charts en tiempo real desde sitios oficiales',
+            'Conversión automática WAV + MP3 320k',
+            'Sin dependencia exclusiva de APIs comerciales'
         ],
         'endpoints': {
             '/api/music/info': {
@@ -1901,11 +1927,11 @@ def api_music_info(user):
                 'parametros': 'key (requerido), q (requerido), limit (opcional, max 100)',
                 'ejemplo': '/api/music/search/songs?q=bohemian%20rhapsody&limit=10&key=TU_API_KEY',
                 'datos_incluidos': [
-                    'Título, artista, álbum',
+                    'Título, artista, álbum (extraído por scraping)',
                     'Duración, popularidad, fecha de lanzamiento',
-                    'Carátula, enlaces de reproducción',
-                    'Enlaces de descarga WAV y MP3',
-                    'Información de múltiples fuentes'
+                    'Carátula oficial, enlaces de reproducción',
+                    'Enlaces de descarga directa WAV y MP3',
+                    'Información combinada de múltiples fuentes reales'
                 ]
             },
             '/api/music/search/albums': {
@@ -1913,10 +1939,10 @@ def api_music_info(user):
                 'parametros': 'key (requerido), q (requerido), limit (opcional, max 50)',
                 'ejemplo': '/api/music/search/albums?q=dark%20side%20moon&key=TU_API_KEY',
                 'datos_incluidos': [
-                    'Título del álbum, artista, año',
-                    'Carátula, número de canciones',
-                    'Lista completa de canciones con duración',
-                    'Enlaces de descarga para cada canción'
+                    'Título del álbum, artista, año (scraping real)',
+                    'Carátula oficial, número de canciones',
+                    'Tracklist completa extraída automáticamente',
+                    'Enlaces de descarga directa para cada canción'
                 ]
             },
             '/api/music/charts': {
@@ -1941,7 +1967,7 @@ def api_music_info(user):
                 'descripcion': 'Obtener letras completas de canciones',
                 'parametros': 'key (requerido), title (requerido), artist (requerido)',
                 'ejemplo': '/api/music/lyrics?title=Bohemian%20Rhapsody&artist=Queen&key=TU_API_KEY',
-                'fuentes': ['Genius', 'Musixmatch', 'Vagalume']
+                'fuentes': ['Musixmatch (Scraping)', 'Vagalume (Scraping)', 'Genius (Fallback)']
             },
             '/api/music/download': {
                 'descripcion': 'Descargar canción en formato WAV/MP3',
@@ -1977,15 +2003,23 @@ def api_music_info(user):
             'descarga_simultaneas': '3 por usuario',
             'tamaño_cache': 'Limitado por espacio en disco'
         },
-        'apis_requeridas': {
-            'obligatorias': ['Al menos una fuente principal'],
-            'recomendadas': [
-                'Spotify (Client ID + Secret)',
-                'YouTube Data API v3',
-                'Last.fm API Key',
-                'Genius API Token'
+        'fuentes_scraping': {
+            'principales_activas': [
+                'YouTube Music (scraping directo)',
+                'SoundCloud (scraping público)',
+                'Jamendo (API pública + scraping)',
+                'Audiomack (scraping directo)',
+                'Musixmatch (scraping de letras)',
+                'Bandcamp (scraping independiente)',
+                'Vagalume (API pública brasileña)'
             ],
-            'configuracion': 'Panel Admin → API Keys → Agregar claves de música'
+            'apis_fallback': [
+                'Spotify (Client ID + Secret) - opcional',
+                'YouTube Data API v3 - opcional',
+                'Last.fm API Key - opcional',
+                'Genius API Token - opcional'
+            ],
+            'configuracion': 'Panel Admin → Sistema automático sin configuración requerida'
         },
         'almacenamiento': {
             'ruta_base': '/storage/musica/',

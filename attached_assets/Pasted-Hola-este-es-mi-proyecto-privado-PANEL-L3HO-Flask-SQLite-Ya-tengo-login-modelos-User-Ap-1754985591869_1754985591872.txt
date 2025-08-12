@@ -1,0 +1,75 @@
+Hola, este es mi proyecto privado **PANEL-L3HO** (Flask + SQLite). Ya tengo login, modelos (User, ApiKey, WebsiteControl) y dashboard funcionando.
+
+Ahora quiero que crees una **API profesional de música**, privada, protegida con clave única, pero usando **scraping real** para obtener datos y descargas de canciones sin depender solo de APIs oficiales.
+
+---
+
+### **1. Funciones de la API**
+
+* **Buscar canciones** (por nombre o artista): título, artista, duración, carátula, fecha de lanzamiento, enlace de reproducción, y enlaces de descarga en WAV y MP3.
+* **Buscar álbumes**: título, artista, año, carátula, número de canciones, lista de canciones con duración y descargas.
+* **Top charts**: canciones más populares (por país o globalmente).
+* **Detalles de artista**: nombre, foto, biografía, redes sociales, géneros, discografía.
+* **Letras**: letra completa si está disponible.
+
+---
+
+### **2. Fuentes de scraping**
+
+Debe extraer información real de múltiples sitios, combinando oficiales y no oficiales:
+
+**Fuentes principales con scraping:**
+
+* YouTube Music (scraping de resultados y metadatos)
+* SoundCloud (scraping de búsquedas y descargas)
+* Jamendo (scraping de catálogo libre)
+* Audiomack (scraping de canciones y álbumes)
+* Musixmatch (scraping de letras)
+
+**Fuentes secundarias de respaldo:**
+
+* Vagalume
+* Lyrics.com
+* Free Music Archive
+* Bandcamp
+* Otros sitios de música libre o pública que permitan streaming o descarga.
+
+⚠ Si una fuente falla, pasar automáticamente a la siguiente (fallback).
+
+---
+
+### **3. Descargas y calidad**
+
+* Descargar canciones en la mejor calidad posible (WAV como prioridad, MP3 como alternativa).
+* Guardar los archivos en `/storage/musica/` organizados por artista/álbum.
+* Generar automáticamente versión MP3 optimizada desde el WAV.
+* Implementar **caché local** para no volver a descargar lo mismo.
+
+---
+
+### **4. Integración con el panel**
+
+* Todas las “fuentes de música” deben registrarse en el apartado **API Keys** de mi panel, con:
+
+  * Nombre de la fuente (ej: “Scraping YouTube Music”, “Scraping SoundCloud”)
+  * Lista de endpoints disponibles
+  * Estado (activo/inactivo)
+  * Sin límite de uso (porque son propias).
+* Cada fuente debe tener su clave privada única.
+
+---
+
+### **5. Organización del código**
+
+* `services/musica.py` → scraping, descargas, conversión de audio y manejo de caché.
+* `routes.py` → endpoints de la API de música.
+* `utils.py` → funciones de conversión y validación.
+
+---
+
+**IMPORTANTE:**
+
+* Todo real, sin datos ficticios.
+* Preparado para integrarse en mi web y exportarse como APK.
+* Sistema profesional con múltiples fuentes de respaldo y sin depender solo de APIs oficiales.
+
