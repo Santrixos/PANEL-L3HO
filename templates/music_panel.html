@@ -1,0 +1,467 @@
+{% extends "base.html" %}
+
+{% block title %}Panel de Música - L3HO{% endblock %}
+
+{% block extra_css %}
+<style>
+    .music-header {
+        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+    }
+    
+    .api-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        border-left: 4px solid;
+    }
+    
+    .api-card.youtube { border-left-color: #ff0000; }
+    .api-card.spotify { border-left-color: #1db954; }
+    .api-card.lastfm { border-left-color: #d51007; }
+    .api-card.genius { border-left-color: #ffff64; }
+    .api-card.deezer { border-left-color: #feaa2d; }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin: 2rem 0;
+    }
+    
+    .stat-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 10px;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .endpoint-list {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1rem;
+    }
+    
+    .endpoint-item {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        padding: 0.5rem;
+        margin: 0.25rem 0;
+        background: white;
+        border-radius: 4px;
+        border-left: 3px solid #007bff;
+    }
+    
+    .code-block {
+        background: #2d3748;
+        color: #e2e8f0;
+        padding: 1rem;
+        border-radius: 8px;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9rem;
+        overflow-x: auto;
+    }
+    
+    .test-result {
+        margin-top: 0.5rem;
+        padding: 0.5rem;
+        border-radius: 4px;
+    }
+    
+    .test-result.success { 
+        background: #d4edda; 
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+    
+    .test-result.error { 
+        background: #f8d7da; 
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header del Panel de Música -->
+<div class="music-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1><i class="fas fa-music me-3"></i>Panel de Música Profesional</h1>
+                <p class="mb-0">API completa con múltiples fuentes y descargas automáticas en alta calidad</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{{ url_for('master_panel') }}" class="btn btn-outline-light">
+                    <i class="fas fa-arrow-left"></i> Volver al Panel
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid">
+    <!-- Estadísticas del Sistema -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3>{{ music_apis|length }}</h3>
+            <p class="text-muted mb-0">APIs Configuradas</p>
+        </div>
+        <div class="stat-card">
+            <h3>{{ cache_stats.total_files if cache_stats else 0 }}</h3>
+            <p class="text-muted mb-0">Archivos en Caché</p>
+        </div>
+        <div class="stat-card">
+            <h3>{{ "%.1f"|format(cache_stats.total_size_mb if cache_stats else 0) }} MB</h3>
+            <p class="text-muted mb-0">Tamaño de Caché</p>
+        </div>
+        <div class="stat-card">
+            <h3>{{ music_stats.data.total_files if music_stats and music_stats.success else 0 }}</h3>
+            <p class="text-muted mb-0">Canciones Descargadas</p>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- APIs Configuradas -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-key"></i> APIs de Música Configuradas</h5>
+                </div>
+                <div class="card-body">
+                    {% if music_apis %}
+                    {% for api in music_apis %}
+                    <div class="api-card {{ api.service_type }}">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <h6>
+                                    {% if api.service_type == 'youtube' %}
+                                        <i class="fab fa-youtube"></i> YouTube Data API
+                                    {% elif api.service_type == 'spotify' %}
+                                        <i class="fab fa-spotify"></i> Spotify API
+                                    {% elif api.service_type == 'lastfm' %}
+                                        <i class="fas fa-music"></i> Last.fm API
+                                    {% elif api.service_type == 'genius' %}
+                                        <i class="fas fa-file-alt"></i> Genius API
+                                    {% elif api.service_type == 'deezer' %}
+                                        <i class="fas fa-compact-disc"></i> Deezer API
+                                    {% else %}
+                                        <i class="fas fa-cog"></i> {{ api.service_type.title() }} API
+                                    {% endif %}
+                                </h6>
+                                <small class="text-muted">{{ api.description or 'API de música' }}</small>
+                                <br>
+                                <span class="badge bg-{{ 'success' if api.is_active else 'secondary' }}">
+                                    {{ 'Activa' if api.is_active else 'Inactiva' }}
+                                </span>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                {% if session.is_admin %}
+                                <button class="btn btn-sm btn-outline-primary" 
+                                        onclick="testMusicApi('{{ api.service_type }}')">
+                                    <i class="fas fa-flask"></i> Probar
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div id="test-result-{{ api.service_type }}" class="test-result" style="display: none;"></div>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <div class="alert alert-warning">
+                        <h6><i class="fas fa-exclamation-triangle"></i> APIs No Configuradas</h6>
+                        <p>No hay APIs de música configuradas. Agrega al menos una API para comenzar:</p>
+                        <ul>
+                            <li><strong>YouTube Data API:</strong> Para búsquedas y descargas</li>
+                            <li><strong>Spotify API:</strong> Para metadatos y listas reproducción</li>
+                            <li><strong>Last.fm API:</strong> Para estadísticas y recomendaciones</li>
+                            <li><strong>Genius API:</strong> Para letras de canciones</li>
+                        </ul>
+                        {% if session.is_admin %}
+                        <a href="{{ url_for('admin') }}" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Configurar APIs
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Endpoints de API -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-code"></i> Endpoints Disponibles</h5>
+                </div>
+                <div class="card-body">
+                    <div class="endpoint-list">
+                        <div class="endpoint-item">
+                            <div class="flex-grow-1">
+                                <strong>GET /api/music/search/songs</strong>
+                                <br>
+                                <small class="text-muted">Buscar canciones por nombre o artista</small>
+                            </div>
+                        </div>
+                        
+                        <div class="endpoint-item">
+                            <div class="flex-grow-1">
+                                <strong>GET /api/music/search/albums</strong>
+                                <br>
+                                <small class="text-muted">Buscar álbumes completos</small>
+                            </div>
+                        </div>
+                        
+                        <div class="endpoint-item">
+                            <div class="flex-grow-1">
+                                <strong>GET /api/music/charts</strong>
+                                <br>
+                                <small class="text-muted">Top charts globales o por país</small>
+                            </div>
+                        </div>
+                        
+                        <div class="endpoint-item">
+                            <div class="flex-grow-1">
+                                <strong>GET /api/music/artist/{nombre}</strong>
+                                <br>
+                                <small class="text-muted">Información detallada de artistas</small>
+                            </div>
+                        </div>
+                        
+                        <div class="endpoint-item">
+                            <div class="flex-grow-1">
+                                <strong>GET /api/music/lyrics</strong>
+                                <br>
+                                <small class="text-muted">Letras completas de canciones</small>
+                            </div>
+                        </div>
+                        
+                        <div class="endpoint-item">
+                            <div class="flex-grow-1">
+                                <strong>POST /api/music/download</strong>
+                                <br>
+                                <small class="text-muted">Descargar canciones en WAV/MP3</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <a href="/api/music/info?key={{ current_user.api_key if current_user else 'TU_API_KEY' }}" 
+                           target="_blank" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-book"></i> Ver Documentación Completa
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Ejemplos de Uso -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-terminal"></i> Ejemplos de Uso</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Buscar Canciones</h6>
+                            <div class="code-block">
+GET /api/music/search/songs?q=bohemian%20rhapsody&limit=10&key=TU_API_KEY
+
+{
+  "success": true,
+  "data": [
+    {
+      "title": "Bohemian Rhapsody",
+      "artist": "Queen",
+      "album": "A Night at the Opera",
+      "duration_ms": 355000,
+      "cover_art": "https://...",
+      "download_links": {
+        "wav": "/api/music/download/123/wav",
+        "mp3": "/api/music/download/123/mp3"
+      }
+    }
+  ]
+}
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h6>Obtener Letras</h6>
+                            <div class="code-block">
+GET /api/music/lyrics?title=Imagine&artist=John%20Lennon&key=TU_API_KEY
+
+{
+  "success": true,
+  "data": {
+    "song_title": "Imagine",
+    "artist_name": "John Lennon",
+    "lyrics": "Imagine there's no heaven...",
+    "source": "Genius"
+  }
+}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <h6>Descargar Canción</h6>
+                            <div class="code-block">
+POST /api/music/download?key=TU_API_KEY
+Content-Type: application/json
+
+{
+  "song_data": {
+    "title": "Bohemian Rhapsody",
+    "artist": "Queen"
+  },
+  "quality": "best"
+}
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h6>Top Charts</h6>
+                            <div class="code-block">
+GET /api/music/charts?country=MX&type=tracks&limit=50&key=TU_API_KEY
+
+{
+  "success": true,
+  "data": [
+    {
+      "position": 1,
+      "title": "Song Title",
+      "artist": "Artist Name",
+      "streams": 1000000
+    }
+  ],
+  "country": "MX"
+}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Gestión de Caché -->
+    {% if session.is_admin %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-database"></i> Gestión de Caché y Almacenamiento</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h6>Caché de Consultas</h6>
+                            <p><strong>{{ cache_stats.total_files if cache_stats else 0 }}</strong> archivos</p>
+                            <p><strong>{{ "%.2f"|format(cache_stats.total_size_mb if cache_stats else 0) }} MB</strong> utilizados</p>
+                            
+                            <button class="btn btn-warning btn-sm" onclick="clearCache()">
+                                <i class="fas fa-trash"></i> Limpiar Caché
+                            </button>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <h6>Música Descargada</h6>
+                            {% if music_stats and music_stats.success %}
+                            <p><strong>{{ music_stats.data.total_files }}</strong> archivos</p>
+                            <p><strong>{{ music_stats.data.total_size_mb }} MB</strong> utilizados</p>
+                            <p><strong>{{ music_stats.data.total_artists }}</strong> artistas</p>
+                            {% else %}
+                            <p class="text-muted">No hay música descargada</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <h6>Acciones</h6>
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-info btn-sm" onclick="refreshStats()">
+                                    <i class="fas fa-sync"></i> Actualizar Estadísticas
+                                </button>
+                                <button class="btn btn-secondary btn-sm" onclick="exportConfig()">
+                                    <i class="fas fa-download"></i> Exportar Configuración
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function testMusicApi(apiType) {
+    const resultDiv = document.getElementById(`test-result-${apiType}`);
+    resultDiv.style.display = 'block';
+    resultDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Probando API...';
+    resultDiv.className = 'test-result';
+    
+    fetch(`/music/test-api/${apiType}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                resultDiv.className = 'test-result success';
+                resultDiv.innerHTML = `<i class="fas fa-check-circle"></i> ${data.message}`;
+            } else {
+                resultDiv.className = 'test-result error';
+                resultDiv.innerHTML = `<i class="fas fa-times-circle"></i> ${data.message || data.error}`;
+            }
+        })
+        .catch(error => {
+            resultDiv.className = 'test-result error';
+            resultDiv.innerHTML = `<i class="fas fa-times-circle"></i> Error de conexión: ${error.message}`;
+        });
+}
+
+function clearCache() {
+    if (confirm('¿Estás seguro de que quieres limpiar el caché? Esto puede afectar el rendimiento temporalmente.')) {
+        fetch('/api/music/cache/clear?key={{ current_user.api_key if current_user else "" }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Caché limpiado correctamente');
+                location.reload();
+            } else {
+                alert('Error limpiando caché: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Error: ' + error.message);
+        });
+    }
+}
+
+function refreshStats() {
+    location.reload();
+}
+
+function exportConfig() {
+    // Función para exportar configuración (a implementar)
+    alert('Funcionalidad de exportación en desarrollo');
+}
+
+// Auto-actualizar estadísticas cada 2 minutos
+setInterval(refreshStats, 120000);
+</script>
+{% endblock %}

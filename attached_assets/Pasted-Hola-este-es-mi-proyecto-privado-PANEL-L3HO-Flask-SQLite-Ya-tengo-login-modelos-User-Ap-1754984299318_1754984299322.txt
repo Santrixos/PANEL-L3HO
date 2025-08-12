@@ -1,0 +1,88 @@
+Hola, este es mi proyecto privado **PANEL-L3HO** (Flask + SQLite). Ya tengo login, modelos (User, ApiKey, WebsiteControl) y dashboard funcionando.
+
+Ahora quiero que crees una **API profesional de música** con estas características:
+
+---
+
+### **1. Funciones principales de la API**
+
+* **Buscar canciones**: por nombre o artista, devolviendo título, artista, duración, carátula, fecha de lanzamiento, enlace de reproducción, y enlaces de descarga en WAV y MP3.
+* **Buscar álbumes**: título, artista, año, carátula, número de canciones, lista de canciones con duración, enlaces de descarga en WAV y MP3.
+* **Top charts**: canciones más escuchadas globalmente o por país.
+* **Detalles de artista**: nombre, foto, biografía, redes sociales, géneros, discografía.
+* **Letras de canciones**: letra completa si está disponible.
+
+---
+
+### **2. Descargas y formato**
+
+* El sistema debe poder **descargar canciones automáticamente en formato WAV** con la mejor calidad posible.
+* Las descargas se guardan en `/storage/musica/` con nombres organizados por artista/álbum.
+* También generar automáticamente una versión MP3 optimizada.
+* Implementar **caché**: si una canción ya existe en local, no volver a descargarla.
+
+---
+
+### **3. Fuentes de datos**
+
+Debe obtener datos reales de múltiples fuentes:
+
+**Fuentes principales:**
+
+* YouTube Data API
+* Spotify API
+* Last.fm API
+* Genius API
+* Deezer API
+
+**Fuentes secundarias (respaldo):**
+
+* SoundCloud API
+* Audiomack API
+* Jamendo API
+* Discogs API
+* Musixmatch API
+* Vagalume API
+
+El sistema debe hacer **fallback**: si una fuente falla, probar con la siguiente.
+
+---
+
+### **4. Gestión de API Keys**
+
+* Todas las claves de todas las APIs deben guardarse en la base de datos `ApiKey` ya existente.
+* Cada clave debe tener:
+
+  * Nombre descriptivo (ej. “YouTube Música”, “Spotify Álbumes”, “Musixmatch Letras”)
+  * Tipo de servicio (música, fútbol, películas, apps)
+  * Lista de endpoints disponibles para esa API.
+  * Estado (activo/inactivo).
+* Las claves deben poder **editarse desde el panel** sin tocar código.
+* No deben tener límite de uso, porque son propias.
+
+---
+
+### **5. Seguridad**
+
+* Cada API de música debe estar protegida con su propia clave privada.
+* Todas las peticiones deben validarse antes de devolver datos.
+
+---
+
+### **6. Integración**
+
+* El código debe estar separado:
+
+  * `services/musica.py` → lógica de conexión a fuentes y descarga.
+  * `routes.py` → rutas y endpoints.
+  * `utils.py` → utilidades de conversión de audio, caché y validación.
+* Preparado para integrarse en la web y luego exportarse como APK.
+
+---
+
+⚠ **IMPORTANTE:**
+
+* Todo real y funcional, sin datos ficticios.
+* Descargas y caché en alta calidad (WAV).
+* Listo para producción.
+* Usar siempre las API Keys guardadas en el panel.

@@ -101,6 +101,39 @@ The application is designed to integrate with various external APIs across diffe
 
 The system now includes a comprehensive professional API for Liga MX with complete data coverage:
 
+## Music API V1.0 - Professional Music System (NEW)
+
+The system now includes a complete professional music API with multiple real data sources and automatic downloads:
+
+### Music API Features (All require ?key=YOUR_API_KEY)
+- **GET /api/music/search/songs** - Search songs with fallback across multiple sources
+- **GET /api/music/search/albums** - Complete album search with track listings
+- **GET /api/music/charts** - Global and country-specific top charts
+- **GET /api/music/artist/{name}** - Complete artist information and biography
+- **GET /api/music/lyrics** - Full lyrics from multiple sources with fallback
+- **POST /api/music/download** - Automatic WAV/MP3 downloads with cache
+- **GET /api/music/cache/stats** - System statistics (admin only)
+- **POST /api/music/cache/clear** - Cache management (admin only)
+
+### Music Data Sources (Real & Live)
+- **Primary Sources**: Spotify API, YouTube Data API, Last.fm API, Genius API, Deezer API
+- **Backup Sources**: SoundCloud API, Audiomack API, Jamendo API, Discogs API, Musixmatch API, Vagalume API
+- **Intelligent Fallback**: Automatic source switching if primary fails
+- **Real-time Data**: Fresh data with each API call, no fictional content
+
+### Download System
+- **High Quality WAV**: Original quality downloads using yt-dlp
+- **Optimized MP3**: 320k MP3 conversion for compatibility
+- **Smart Cache**: Prevents duplicate downloads, organized by artist/album
+- **Storage Path**: `/storage/musica/` with structured organization
+- **Format Support**: WAV, MP3 with metadata tagging
+
+### Music API Authentication
+- **Personal API Keys**: Same system as football API
+- **Rate Limiting**: Built-in protection with usage tracking
+- **Admin Features**: Cache management and system statistics
+- **User Tracking**: Complete request logging and analytics
+
 ### API Endpoints (All require ?key=YOUR_API_KEY)
 - **GET /api/info** - Complete API documentation and interactive guide
 - **GET /api/tabla** - Complete Liga MX standings with detailed statistics

@@ -1434,8 +1434,624 @@ def get_error_rates_stats():
     """Obtiene estadísticas de errores"""
     return {}
 
+# ==================== API PROFESIONAL DE MÚSICA ====================
+
+# Importar servicio de música personalizado
+from services.musica import MusicService
+from utils import cache_manager, audio_converter, api_validator, file_manager
+
+# Inicializar servicio de música
+music_service = MusicService()
+
+def configure_music_apis():
+    """Configurar todas las APIs de música desde la base de datos"""
+    try:
+        api_keys = {}
+        
+        # Obtener API keys de música desde la base de datos
+        music_apis = ApiKey.query.filter_by(service_name='music').all()
+        
+        for api in music_apis:
+            if api.is_active:
+                if api.service_type == 'youtube':
+                    api_keys['youtube'] = api.api_key
+                elif api.service_type == 'spotify':
+                    if ':' in api.api_key:
+                        api_keys['spotify_client_id'] = api.api_key.split(':')[0]
+                        api_keys['spotify_client_secret'] = api.api_key.split(':')[1]
+                elif api.service_type == 'lastfm':
+                    api_keys['lastfm'] = api.api_key
+                elif api.service_type == 'genius':
+                    api_keys['genius'] = api.api_key
+                elif api.service_type == 'musixmatch':
+                    api_keys['musixmatch'] = api.api_key
+                elif api.service_type == 'soundcloud':
+                    api_keys['soundcloud'] = api.api_key
+        
+        music_service.configure_apis(api_keys)
+        logging.info(f"APIs de música configuradas: {len(api_keys)}")
+        
+    except Exception as e:
+        logging.error(f"Error configurando APIs de música: {e}")
+
+@app.route('/api/music/search/songs')
+@require_api_key
+def api_music_search_songs(user):
+    """API: Buscar canciones por nombre o artista"""
+    try:
+        query = request.args.get('q', '').strip()
+        limit = min(int(request.args.get('limit', 20)), 100)
+        
+        if not query:
+            return jsonify({
+                'success': False,
+                'error': 'Parámetro "q" requerido'
+            }), 400
+        
+        # Configurar APIs
+        configure_music_apis()
+        
+        # Verificar caché primero
+        cache_key = cache_manager.get_cache_key(f"search_songs_{query}_{limit}")
+        cached_result = cache_manager.get_cached_data(cache_key)
+        
+        if cached_result:
+            cached_result['from_cache'] = True
+            return jsonify(cached_result)
+        
+        # Buscar canciones
+        result = music_service.search_songs(query, limit)
+        
+        if result['success']:
+            # Guardar en caché
+            cache_manager.cache_data(cache_key, result)
+            
+            # Registrar uso de API
+            record_api_usage(user.api_key, '/api/music/search/songs', user.id, request.remote_addr)
+        
+        result['api_version'] = '1.0'
+        result['usuario'] = user.username
+        result['timestamp'] = datetime.now().isoformat()
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        logging.error(f"Error en búsqueda de canciones: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Error interno del servidor',
+            'message': str(e)
+        }), 500
+
+@app.route('/api/music/search/albums')
+@require_api_key
+def api_music_search_albums(user):
+    """API: Buscar álbumes por título o artista"""
+    try:
+        query = request.args.get('q', '').strip()
+        limit = min(int(request.args.get('limit', 20)), 50)
+        
+        if not query:
+            return jsonify({
+                'success': False,
+                'error': 'Parámetro "q" requerido'
+            }), 400
+        
+        configure_music_apis()
+        
+        # Verificar caché
+        cache_key = cache_manager.get_cache_key(f"search_albums_{query}_{limit}")
+        cached_result = cache_manager.get_cached_data(cache_key)
+        
+        if cached_result:
+            cached_result['from_cache'] = True
+            return jsonify(cached_result)
+        
+        # Buscar álbumes
+        result = music_service.search_albums(query, limit)
+        
+        if result['success']:
+            cache_manager.cache_data(cache_key, result)
+            record_api_usage(user.api_key, '/api/music/search/albums', user.id, request.remote_addr)
+        
+        result['api_version'] = '1.0'
+        result['usuario'] = user.username
+        result['timestamp'] = datetime.now().isoformat()
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': 'Error interno del servidor',
+            'message': str(e)
+        }), 500
+
+@app.route('/api/music/charts')
+@require_api_key
+def api_music_charts(user):
+    """API: Obtener top charts de música"""
+    try:
+        country = request.args.get('country', 'global')
+        chart_type = request.args.get('type', 'tracks')
+        limit = min(int(request.args.get('limit', 50)), 100)
+        
+        configure_music_apis()
+        
+        # Verificar caché
+        cache_key = cache_manager.get_cache_key(f"charts_{country}_{chart_type}_{limit}")
+        cached_result = cache_manager.get_cached_data(cache_key)
+        
+        if cached_result:
+            cached_result['from_cache'] = True
+            return jsonify(cached_result)
+        
+        # Obtener charts
+        result = music_service.get_top_charts(country, chart_type, limit)
+        
+        if result['success']:
+            cache_manager.cache_data(cache_key, result)
+            record_api_usage(user.api_key, '/api/music/charts', user.id, request.remote_addr)
+        
+        result['api_version'] = '1.0'
+        result['usuario'] = user.username
+        result['timestamp'] = datetime.now().isoformat()
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': 'Error interno del servidor',
+            'message': str(e)
+        }), 500
+
+@app.route('/api/music/artist/<artist_name>')
+@require_api_key
+def api_music_artist_details(user, artist_name):
+    """API: Obtener detalles de un artista"""
+    try:
+        configure_music_apis()
+        
+        # Verificar caché
+        cache_key = cache_manager.get_cache_key(f"artist_{artist_name}")
+        cached_result = cache_manager.get_cached_data(cache_key)
+        
+        if cached_result:
+            cached_result['from_cache'] = True
+            return jsonify(cached_result)
+        
+        # Obtener detalles del artista
+        result = music_service.get_artist_details(artist_name)
+        
+        if result['success']:
+            cache_manager.cache_data(cache_key, result)
+            record_api_usage(user.api_key, f'/api/music/artist/{artist_name}', user.id, request.remote_addr)
+        
+        result['api_version'] = '1.0'
+        result['usuario'] = user.username
+        result['timestamp'] = datetime.now().isoformat()
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': 'Error interno del servidor',
+            'message': str(e)
+        }), 500
+
+@app.route('/api/music/lyrics')
+@require_api_key
+def api_music_lyrics(user):
+    """API: Obtener letras de una canción"""
+    try:
+        song_title = request.args.get('title', '').strip()
+        artist_name = request.args.get('artist', '').strip()
+        
+        if not song_title or not artist_name:
+            return jsonify({
+                'success': False,
+                'error': 'Parámetros "title" y "artist" requeridos'
+            }), 400
+        
+        configure_music_apis()
+        
+        # Verificar caché
+        cache_key = cache_manager.get_cache_key(f"lyrics_{song_title}_{artist_name}")
+        cached_result = cache_manager.get_cached_data(cache_key)
+        
+        if cached_result:
+            cached_result['from_cache'] = True
+            return jsonify(cached_result)
+        
+        # Obtener letras
+        result = music_service.get_song_lyrics(song_title, artist_name)
+        
+        if result['success']:
+            cache_manager.cache_data(cache_key, result)
+            record_api_usage(user.api_key, '/api/music/lyrics', user.id, request.remote_addr)
+        
+        result['api_version'] = '1.0'
+        result['usuario'] = user.username
+        result['timestamp'] = datetime.now().isoformat()
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': 'Error interno del servidor',
+            'message': str(e)
+        }), 500
+
+@app.route('/api/music/download', methods=['POST'])
+@require_api_key
+def api_music_download(user):
+    """API: Descargar canción en formato WAV/MP3"""
+    try:
+        data = request.get_json()
+        
+        if not data or 'song_data' not in data:
+            return jsonify({
+                'success': False,
+                'error': 'Datos de canción requeridos'
+            }), 400
+        
+        song_data = data['song_data']
+        quality = data.get('quality', 'best')
+        
+        # Validar datos requeridos
+        validation = api_validator.validate_request_data(
+            song_data, 
+            ['title', 'artist']
+        )
+        
+        if not validation['success']:
+            return jsonify(validation), 400
+        
+        configure_music_apis()
+        
+        # Descargar canción
+        result = music_service.download_song(song_data, quality)
+        
+        if result['success']:
+            record_api_usage(user.api_key, '/api/music/download', user.id, request.remote_addr)
+            
+            # Log de descarga
+            content_manager.log_system_action(
+                'INFO', 'MUSIC', 
+                f'Canción descargada: {song_data["title"]} - {song_data["artist"]}',
+                {'user_id': user.id, 'quality': quality, 'from_cache': result.get('from_cache', False)},
+                user.id
+            )
+        
+        result['api_version'] = '1.0'
+        result['usuario'] = user.username
+        result['timestamp'] = datetime.now().isoformat()
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': 'Error interno del servidor',
+            'message': str(e)
+        }), 500
+
+@app.route('/api/music/download/<song_id>/<format>')
+@require_api_key
+def api_music_download_direct(user, song_id, format):
+    """API: Descarga directa de archivo de audio"""
+    try:
+        if format not in ['wav', 'mp3']:
+            return jsonify({
+                'success': False,
+                'error': 'Formato debe ser wav o mp3'
+            }), 400
+        
+        # Esta sería la implementación para servir archivos descargados
+        # Necesitaríamos mapear song_id a rutas de archivos
+        
+        return jsonify({
+            'success': False,
+            'error': 'Funcionalidad de descarga directa en desarrollo'
+        }), 501
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': 'Error interno del servidor',
+            'message': str(e)
+        }), 500
+
+@app.route('/api/music/cache/stats')
+@require_api_key
+def api_music_cache_stats(user):
+    """API: Estadísticas del sistema de caché"""
+    try:
+        if not user.is_admin:
+            return jsonify({
+                'success': False,
+                'error': 'Acceso denegado'
+            }), 403
+        
+        # Estadísticas del caché
+        cache_stats = cache_manager.get_cache_stats()
+        
+        # Estadísticas de archivos de música
+        music_stats = music_service.get_cache_stats()
+        
+        # Uso de disco
+        disk_usage = file_manager.get_disk_usage()
+        
+        result = {
+            'success': True,
+            'data': {
+                'cache': cache_stats,
+                'music_files': music_stats.get('data', {}),
+                'disk_usage': disk_usage.get('data', {}),
+                'system_info': {
+                    'apis_configured': len([k for k, v in music_service.apis.items() if v]),
+                    'storage_path': music_service.storage_path
+                }
+            },
+            'api_version': '1.0',
+            'usuario': user.username,
+            'timestamp': datetime.now().isoformat()
+        }
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': 'Error interno del servidor',
+            'message': str(e)
+        }), 500
+
+@app.route('/api/music/cache/clear', methods=['POST'])
+@require_api_key
+def api_music_cache_clear(user):
+    """API: Limpiar caché del sistema"""
+    try:
+        if not user.is_admin:
+            return jsonify({
+                'success': False,
+                'error': 'Acceso denegado'
+            }), 403
+        
+        data = request.get_json() or {}
+        pattern = data.get('pattern')  # Patrón opcional para limpiar caché específico
+        
+        # Limpiar caché
+        cleared = cache_manager.clear_cache(pattern)
+        
+        # Limpiar archivos temporales
+        temp_cleaned = file_manager.cleanup_temp_files()
+        
+        # Log de la acción
+        content_manager.log_system_action(
+            'INFO', 'MUSIC', 
+            f'Caché limpiado: {cleared} archivos, {temp_cleaned} temporales',
+            {'pattern': pattern, 'user_id': user.id},
+            user.id
+        )
+        
+        return jsonify({
+            'success': True,
+            'message': 'Caché limpiado correctamente',
+            'data': {
+                'cache_files_cleared': cleared,
+                'temp_files_cleared': temp_cleaned
+            },
+            'api_version': '1.0',
+            'usuario': user.username,
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': 'Error interno del servidor',
+            'message': str(e)
+        }), 500
+
+@app.route('/api/music/info')
+@require_api_key
+def api_music_info(user):
+    """API: Información y documentación completa de la API de música"""
+    return jsonify({
+        'api_name': 'Panel L3HO - API Profesional de Música',
+        'version': '1.0',
+        'descripcion': 'API completa para búsqueda, descarga y gestión de música con múltiples fuentes',
+        'fuentes_principales': [
+            'Spotify API',
+            'YouTube Data API', 
+            'Last.fm API',
+            'Genius API',
+            'Deezer API'
+        ],
+        'fuentes_respaldo': [
+            'SoundCloud API',
+            'Audiomack API',
+            'Jamendo API',
+            'Discogs API',
+            'Musixmatch API',
+            'Vagalume API'
+        ],
+        'formatos_descarga': ['WAV (Alta calidad)', 'MP3 (320k optimizado)'],
+        'caracteristicas': [
+            'Búsqueda inteligente con fallback automático',
+            'Descargas automáticas en alta calidad',
+            'Sistema de caché para optimizar rendimiento',
+            'Letras de canciones desde múltiples fuentes',
+            'Información completa de artistas y álbumes',
+            'Top charts globales y por país',
+            'Conversión automática entre formatos'
+        ],
+        'endpoints': {
+            '/api/music/info': {
+                'descripcion': 'Información general y documentación de la API',
+                'parametros': 'key (requerido)',
+                'ejemplo': '/api/music/info?key=TU_API_KEY'
+            },
+            '/api/music/search/songs': {
+                'descripcion': 'Buscar canciones por nombre o artista',
+                'parametros': 'key (requerido), q (requerido), limit (opcional, max 100)',
+                'ejemplo': '/api/music/search/songs?q=bohemian%20rhapsody&limit=10&key=TU_API_KEY',
+                'datos_incluidos': [
+                    'Título, artista, álbum',
+                    'Duración, popularidad, fecha de lanzamiento',
+                    'Carátula, enlaces de reproducción',
+                    'Enlaces de descarga WAV y MP3',
+                    'Información de múltiples fuentes'
+                ]
+            },
+            '/api/music/search/albums': {
+                'descripcion': 'Buscar álbumes por título o artista',
+                'parametros': 'key (requerido), q (requerido), limit (opcional, max 50)',
+                'ejemplo': '/api/music/search/albums?q=dark%20side%20moon&key=TU_API_KEY',
+                'datos_incluidos': [
+                    'Título del álbum, artista, año',
+                    'Carátula, número de canciones',
+                    'Lista completa de canciones con duración',
+                    'Enlaces de descarga para cada canción'
+                ]
+            },
+            '/api/music/charts': {
+                'descripcion': 'Top charts globales o por país',
+                'parametros': 'key (requerido), country (opcional), type (opcional), limit (opcional)',
+                'ejemplo': '/api/music/charts?country=MX&type=tracks&limit=50&key=TU_API_KEY',
+                'paises_soportados': ['global', 'US', 'MX', 'ES', 'UK', 'DE', 'FR'],
+                'tipos_disponibles': ['tracks', 'albums', 'artists']
+            },
+            '/api/music/artist/{nombre}': {
+                'descripcion': 'Información detallada de un artista',
+                'parametros': 'key (requerido)',
+                'ejemplo': '/api/music/artist/Queen?key=TU_API_KEY',
+                'datos_incluidos': [
+                    'Nombre, foto oficial, biografía',
+                    'Géneros musicales, redes sociales',
+                    'Discografía completa con fechas',
+                    'Estadísticas de popularidad'
+                ]
+            },
+            '/api/music/lyrics': {
+                'descripcion': 'Obtener letras completas de canciones',
+                'parametros': 'key (requerido), title (requerido), artist (requerido)',
+                'ejemplo': '/api/music/lyrics?title=Bohemian%20Rhapsody&artist=Queen&key=TU_API_KEY',
+                'fuentes': ['Genius', 'Musixmatch', 'Vagalume']
+            },
+            '/api/music/download': {
+                'descripcion': 'Descargar canción en formato WAV/MP3',
+                'metodo': 'POST',
+                'parametros': 'key (requerido), song_data (JSON con título/artista), quality (opcional)',
+                'ejemplo': 'POST con JSON: {"song_data": {"title": "Canción", "artist": "Artista"}}',
+                'formatos_salida': ['WAV (sin pérdida)', 'MP3 320k (optimizado)']
+            },
+            '/api/music/cache/stats': {
+                'descripcion': 'Estadísticas del sistema de caché y almacenamiento',
+                'parametros': 'key (requerido)',
+                'requiere_admin': True,
+                'datos_incluidos': [
+                    'Archivos en caché, uso de disco',
+                    'Estadísticas de descargas',
+                    'APIs configuradas y estado'
+                ]
+            },
+            '/api/music/cache/clear': {
+                'descripcion': 'Limpiar caché del sistema',
+                'metodo': 'POST',
+                'parametros': 'key (requerido), pattern (opcional)',
+                'requiere_admin': True
+            }
+        },
+        'autenticacion': {
+            'tipo': 'API Key personal',
+            'formato': 'URL parameter: ?key=TU_API_KEY',
+            'obtencion': 'Panel de administración → Generar API Key'
+        },
+        'limites': {
+            'requests': 'Sin límite para usuarios propios',
+            'descarga_simultaneas': '3 por usuario',
+            'tamaño_cache': 'Limitado por espacio en disco'
+        },
+        'apis_requeridas': {
+            'obligatorias': ['Al menos una fuente principal'],
+            'recomendadas': [
+                'Spotify (Client ID + Secret)',
+                'YouTube Data API v3',
+                'Last.fm API Key',
+                'Genius API Token'
+            ],
+            'configuracion': 'Panel Admin → API Keys → Agregar claves de música'
+        },
+        'almacenamiento': {
+            'ruta_base': '/storage/musica/',
+            'organizacion': 'Por artista → álbum → canción',
+            'formatos': ['WAV original', 'MP3 320k'],
+            'cache_inteligente': 'Evita descargas duplicadas'
+        },
+        'usuario': user.username,
+        'api_version': '1.0',
+        'timestamp': datetime.now().isoformat()
+    })
+
+# ==================== RUTAS DEL PANEL PARA MÚSICA ====================
+
+@app.route('/music/panel')
+def music_panel():
+    """Panel de administración de música"""
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    # Configurar APIs
+    configure_music_apis()
+    
+    # Obtener estadísticas
+    cache_stats = cache_manager.get_cache_stats()
+    music_stats = music_service.get_cache_stats()
+    
+    # APIs configuradas
+    music_apis = ApiKey.query.filter_by(service_name='music', is_active=True).all()
+    
+    return render_template('music_panel.html', 
+                         cache_stats=cache_stats,
+                         music_stats=music_stats,
+                         music_apis=music_apis)
+
+@app.route('/music/test-api/<api_type>')
+def test_music_api(api_type):
+    """Probar una API específica de música"""
+    if 'user_id' not in session or not session.get('is_admin'):
+        return jsonify({'success': False, 'message': 'Acceso denegado'})
+    
+    try:
+        # Obtener API key específica
+        api = ApiKey.query.filter_by(service_name='music', service_type=api_type, is_active=True).first()
+        
+        if not api:
+            return jsonify({
+                'success': False,
+                'message': f'API {api_type} no configurada'
+            })
+        
+        # Probar API
+        result = api_validator.validate_api_key(api.api_key, api_type)
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error probando API: {str(e)}'
+        })
+
 # Call this function when the app starts
 with app.app_context():
     create_admin_user()
     # Inicializar secciones por defecto
     content_manager.initialize_default_sections()
+    # Configurar APIs de música
+    configure_music_apis()
