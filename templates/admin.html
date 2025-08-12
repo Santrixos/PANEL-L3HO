@@ -48,22 +48,26 @@
                         <div class="card-body">
                             <form id="apiForm">
                                 <div class="mb-3">
-                                    <label class="form-label">Servicio</label>
-                                    <select class="form-select" name="service_name" required>
-                                        <option value="">Seleccionar...</option>
-                                        <option value="movies">Películas</option>
-                                        <option value="music">Música</option>
-                                        <option value="mod_apps">Apps MOD</option>
-                                        <option value="football">Fútbol</option>
+                                    <label class="form-label">Categoría de Servicio</label>
+                                    <select class="form-select" name="service_name" required onchange="updateServiceTypes(this.value)">
+                                        <option value="">Seleccionar categoría...</option>
+                                        <option value="football">🏈 Fútbol</option>
+                                        <option value="music">🎵 Música</option>
+                                        <option value="movies">🎬 Películas</option>
+                                        <option value="mod_apps">📱 Apps MOD</option>
+                                        <option value="scraping">🔍 Scraping</option>
                                     </select>
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">Tipo de API</label>
-                                    <input type="text" class="form-control" name="service_type" placeholder="ej: TMDB, Spotify, APK Mirror" required>
+                                    <label class="form-label">Tipo de API / Fuente</label>
+                                    <select class="form-select" name="service_type" id="service_type_select" required>
+                                        <option value="">Selecciona una categoría primero...</option>
+                                    </select>
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">API Key</label>
-                                    <input type="text" class="form-control" name="api_key" required>
+                                    <label class="form-label">API Key / Configuración</label>
+                                    <input type="text" class="form-control" name="api_key" placeholder="Para Spotify: CLIENT_ID:CLIENT_SECRET" required>
+                                    <small class="text-muted">Para algunos servicios, puede requerir formato específico</small>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">URL Base</label>
@@ -71,7 +75,12 @@
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Descripción</label>
-                                    <textarea class="form-control" name="description" rows="3"></textarea>
+                                    <textarea class="form-control" name="description" rows="2" placeholder="Descripción opcional de la API"></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Endpoints Disponibles</label>
+                                    <textarea class="form-control" name="endpoints" rows="3" placeholder="Lista de endpoints separados por comas"></textarea>
+                                    <small class="text-muted">Se completará automáticamente según el tipo seleccionado</small>
                                 </div>
                                 <button type="submit" class="btn btn-primary w-100">
                                     <i class="fas fa-save me-2"></i>Guardar API
@@ -91,10 +100,10 @@
                                 <table class="table table-dark table-hover">
                                     <thead>
                                         <tr>
-                                            <th>Servicio</th>
-                                            <th>Tipo</th>
+                                            <th>Categoría</th>
+                                            <th>Tipo/Fuente</th>
+                                            <th>Endpoints</th>
                                             <th>Estado</th>
-                                            <th>Fecha</th>
                                             <th>Acciones</th>
                                         </tr>
                                     </thead>
@@ -102,24 +111,59 @@
                                         {% for api in apis %}
                                         <tr>
                                             <td>
-                                                <span class="badge badge-service-{{ api.service_name }}">
-                                                    {{ api.service_name.title() }}
-                                                </span>
+                                                {% if api.service_name == 'football' %}
+                                                    <span class="badge bg-success">🏈 Fútbol</span>
+                                                {% elif api.service_name == 'music' %}
+                                                    <span class="badge bg-primary">🎵 Música</span>
+                                                {% elif api.service_name == 'movies' %}
+                                                    <span class="badge bg-warning">🎬 Películas</span>
+                                                {% elif api.service_name == 'mod_apps' %}
+                                                    <span class="badge bg-info">📱 Apps MOD</span>
+                                                {% elif api.service_name == 'scraping' %}
+                                                    <span class="badge bg-secondary">🔍 Scraping</span>
+                                                {% else %}
+                                                    <span class="badge bg-dark">{{ api.service_name.title() }}</span>
+                                                {% endif %}
                                             </td>
-                                            <td>{{ api.service_type }}</td>
+                                            <td>
+                                                <strong>{{ api.service_type }}</strong>
+                                                {% if api.description %}
+                                                <br><small class="text-muted">{{ api.description[:50] }}{% if api.description|length > 50 %}...{% endif %}</small>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if api.endpoints %}
+                                                    {% set endpoint_list = api.endpoints.split(',') %}
+                                                    <div class="endpoint-list">
+                                                        {% for endpoint in endpoint_list[:3] %}
+                                                            <span class="badge bg-light text-dark me-1 mb-1">{{ endpoint.strip() }}</span>
+                                                        {% endfor %}
+                                                        {% if endpoint_list|length > 3 %}
+                                                            <span class="badge bg-light text-dark">+{{ endpoint_list|length - 3 }} más</span>
+                                                        {% endif %}
+                                                    </div>
+                                                {% else %}
+                                                    <small class="text-muted">No configurados</small>
+                                                {% endif %}
+                                            </td>
                                             <td>
                                                 <span class="badge bg-{{ 'success' if api.is_active else 'danger' }}">
                                                     {{ 'Activo' if api.is_active else 'Inactivo' }}
                                                 </span>
+                                                <br><small class="text-muted">{{ api.created_at.strftime('%d/%m/%Y') }}</small>
                                             </td>
-                                            <td>{{ api.created_at.strftime('%d/%m/%Y') }}</td>
                                             <td>
-                                                <button class="btn btn-sm btn-info me-1" onclick="testApiConnection({{ api.id }})" title="Probar conexión">
-                                                    <i class="fas fa-plug"></i>
-                                                </button>
-                                                <button class="btn btn-sm btn-danger" onclick="deleteApi({{ api.id }})" title="Eliminar">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
+                                                <div class="btn-group-vertical btn-group-sm">
+                                                    <button class="btn btn-info btn-sm" onclick="showApiDetails({{ api.id }})" title="Ver detalles">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                    <button class="btn btn-warning btn-sm" onclick="testApiConnection({{ api.id }})" title="Probar conexión">
+                                                        <i class="fas fa-plug"></i>
+                                                    </button>
+                                                    <button class="btn btn-danger btn-sm" onclick="deleteApi({{ api.id }})" title="Eliminar">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                         {% endfor %}
@@ -294,4 +338,302 @@
 
 {% block extra_scripts %}
 <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+
+<script>
+// Configuración de tipos de servicio y sus endpoints
+const serviceTypes = {
+    'football': {
+        'ESPN México': 'get_tabla,get_equipos,get_jugadores,get_calendario,get_estadisticas',
+        'Liga MX Oficial': 'get_tabla,get_equipos,get_jugadores,get_calendario,get_estadisticas',
+        'Transfermarkt': 'get_players,get_transfers,market_values'
+    },
+    'music': {
+        'Spotify': 'search_songs,search_albums,get_artist,get_playlists',
+        'YouTube Music': 'search_songs,download,get_charts',
+        'Last.fm': 'search_songs,get_artist_info,get_charts',
+        'Genius': 'get_lyrics,search_songs,get_artist',
+        'Deezer': 'search_songs,search_albums,get_charts',
+        'SoundCloud': 'search_songs,download',
+        'Jamendo': 'search_songs,search_albums,download',
+        'Audiomack': 'search_songs,search_albums',
+        'Bandcamp': 'search_songs,search_albums,download',
+        'Musixmatch': 'get_lyrics',
+        'Vagalume': 'get_lyrics'
+    },
+    'movies': {
+        'TMDB': 'search_movies,get_movie_details,get_trending,get_genres',
+        'OMDb': 'search_movies,get_movie_details',
+        'IMDb (Scraping)': 'search_movies,get_ratings,get_reviews'
+    },
+    'mod_apps': {
+        'APKMirror': 'search_apps,download_apk,get_versions',
+        'APKPure': 'search_apps,download_apk',
+        'ModDroid': 'search_mods,download_mod'
+    },
+    'scraping': {
+        'YouTube Music (Scraping)': 'search_songs,search_albums,download,get_charts',
+        'SoundCloud (Scraping)': 'search_songs,download',
+        'Jamendo (Scraping)': 'search_songs,search_albums,download',
+        'Audiomack (Scraping)': 'search_songs,search_albums',
+        'Bandcamp (Scraping)': 'search_songs,search_albums,download',
+        'Musixmatch (Scraping)': 'get_lyrics',
+        'Vagalume (Scraping)': 'get_lyrics'
+    }
+};
+
+function updateServiceTypes(category) {
+    const serviceTypeSelect = document.getElementById('service_type_select');
+    const endpointsTextarea = document.querySelector('textarea[name="endpoints"]');
+    
+    // Limpiar opciones actuales
+    serviceTypeSelect.innerHTML = '<option value="">Seleccionar tipo...</option>';
+    
+    if (category && serviceTypes[category]) {
+        Object.keys(serviceTypes[category]).forEach(serviceType => {
+            const option = document.createElement('option');
+            option.value = serviceType.toLowerCase().replace(/\s+/g, '_');
+            option.textContent = serviceType;
+            option.setAttribute('data-endpoints', serviceTypes[category][serviceType]);
+            serviceTypeSelect.appendChild(option);
+        });
+    }
+    
+    // Actualizar endpoints cuando se selecciona un tipo
+    serviceTypeSelect.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        const endpoints = selectedOption.getAttribute('data-endpoints');
+        if (endpoints && endpointsTextarea) {
+            endpointsTextarea.value = endpoints;
+        }
+    });
+}
+
+// API Management Functions
+document.getElementById('apiForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData.entries());
+    
+    fetch('/admin/api/add', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('API agregada correctamente');
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error de conexión');
+    });
+});
+
+function showApiDetails(apiId) {
+    // Mostrar detalles completos de la API en un modal
+    fetch(`/admin/api/${apiId}/details`)
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const api = data.api;
+            const modal = `
+                <div class="modal fade" id="apiDetailsModal" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content bg-dark text-light">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    ${getCategoryIcon(api.service_name)} ${api.service_name.toUpperCase()} - ${api.service_type}
+                                </h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6>Información General</h6>
+                                        <p><strong>URL Base:</strong> ${api.api_url || 'No configurada'}</p>
+                                        <p><strong>Descripción:</strong> ${api.description || 'Sin descripción'}</p>
+                                        <p><strong>Estado:</strong> 
+                                            <span class="badge bg-${api.is_active ? 'success' : 'danger'}">
+                                                ${api.is_active ? 'Activo' : 'Inactivo'}
+                                            </span>
+                                        </p>
+                                        <p><strong>Fecha de creación:</strong> ${new Date(api.created_at).toLocaleDateString()}</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6>Endpoints Disponibles</h6>
+                                        ${api.endpoints ? api.endpoints.split(',').map(endpoint => 
+                                            `<span class="badge bg-primary me-1 mb-1">${endpoint.trim()}</span>`
+                                        ).join('') : '<span class="text-muted">No configurados</span>'}
+                                        
+                                        <h6 class="mt-3">API Key</h6>
+                                        <div class="input-group input-group-sm">
+                                            <input type="password" class="form-control" value="${api.api_key}" id="apiKey${apiId}" readonly>
+                                            <button class="btn btn-outline-secondary" onclick="toggleApiKeyVisibility(${apiId})">
+                                                <i class="fas fa-eye" id="eyeIcon${apiId}"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button class="btn btn-warning" onclick="testApiConnection(${apiId})">
+                                    <i class="fas fa-plug"></i> Probar Conexión
+                                </button>
+                                <button class="btn btn-danger" onclick="deleteApi(${apiId})">
+                                    <i class="fas fa-trash"></i> Eliminar
+                                </button>
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remover modal anterior si existe
+            const existingModal = document.getElementById('apiDetailsModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            document.body.insertAdjacentHTML('beforeend', modal);
+            const modalElement = new bootstrap.Modal(document.getElementById('apiDetailsModal'));
+            modalElement.show();
+        } else {
+            alert('Error cargando detalles: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error de conexión');
+    });
+}
+
+function getCategoryIcon(category) {
+    const icons = {
+        'football': '🏈',
+        'music': '🎵',
+        'movies': '🎬',
+        'mod_apps': '📱',
+        'scraping': '🔍'
+    };
+    return icons[category] || '⚙️';
+}
+
+function toggleApiKeyVisibility(apiId) {
+    const input = document.getElementById(`apiKey${apiId}`);
+    const icon = document.getElementById(`eyeIcon${apiId}`);
+    
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'fas fa-eye-slash';
+    } else {
+        input.type = 'password';
+        icon.className = 'fas fa-eye';
+    }
+}
+
+function testApiConnection(apiId) {
+    const button = event.target.closest('button');
+    const originalHtml = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    button.disabled = true;
+    
+    fetch(`/admin/api/${apiId}/test`, {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        button.innerHTML = originalHtml;
+        button.disabled = false;
+        
+        if (data.success) {
+            alert('✅ Conexión exitosa: ' + data.message);
+        } else {
+            alert('❌ Error en conexión: ' + data.message);
+        }
+    })
+    .catch(error => {
+        button.innerHTML = originalHtml;
+        button.disabled = false;
+        alert('❌ Error de conexión: ' + error.message);
+    });
+}
+
+function deleteApi(apiId) {
+    if (confirm('¿Estás seguro de eliminar esta API? Esta acción no se puede deshacer.')) {
+        fetch(`/admin/api/${apiId}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('API eliminada correctamente');
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error de conexión');
+        });
+    }
+}
+
+// Filtrado de APIs
+function filterAPIs() {
+    const searchInput = document.querySelector('#apiSearch');
+    const categoryFilter = document.querySelector('#categoryFilter');
+    
+    if (searchInput && categoryFilter) {
+        const searchTerm = searchInput.value.toLowerCase();
+        const selectedCategory = categoryFilter.value;
+        const rows = document.querySelectorAll('tbody tr');
+        
+        rows.forEach(row => {
+            const serviceName = row.querySelector('td:first-child').textContent.toLowerCase();
+            const serviceType = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+            
+            const matchesSearch = serviceName.includes(searchTerm) || serviceType.includes(searchTerm);
+            const matchesCategory = !selectedCategory || serviceName.includes(selectedCategory);
+            
+            row.style.display = matchesSearch && matchesCategory ? '' : 'none';
+        });
+    }
+}
+
+// Agregar filtros a la tabla
+document.addEventListener('DOMContentLoaded', function() {
+    const tableContainer = document.querySelector('.table-responsive');
+    if (tableContainer) {
+        const filterHtml = `
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <input type="text" class="form-control" id="apiSearch" placeholder="🔍 Buscar APIs..." onkeyup="filterAPIs()">
+                </div>
+                <div class="col-md-6">
+                    <select class="form-select" id="categoryFilter" onchange="filterAPIs()">
+                        <option value="">Todas las categorías</option>
+                        <option value="fútbol">🏈 Fútbol</option>
+                        <option value="música">🎵 Música</option>
+                        <option value="películas">🎬 Películas</option>
+                        <option value="apps">📱 Apps MOD</option>
+                        <option value="scraping">🔍 Scraping</option>
+                    </select>
+                </div>
+            </div>
+        `;
+        tableContainer.insertAdjacentHTML('beforebegin', filterHtml);
+    }
+});
+</script>
+
 {% endblock %}

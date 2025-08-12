@@ -40,6 +40,7 @@ class ApiKey(db.Model):
     api_key = db.Column(db.String(512), nullable=False)
     api_url = db.Column(db.String(512))
     description = db.Column(db.Text)
+    endpoints = db.Column(db.Text)  # Lista de endpoints separados por comas
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
