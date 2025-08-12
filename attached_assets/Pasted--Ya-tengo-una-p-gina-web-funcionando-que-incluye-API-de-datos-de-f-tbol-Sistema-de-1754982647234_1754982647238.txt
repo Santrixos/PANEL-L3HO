@@ -1,0 +1,49 @@
+
+> Ya tengo una página web funcionando que incluye:
+>
+> * API de **datos de fútbol**.
+> * Sistema de **transmisiones en vivo**.
+> * Apartados para otras secciones (música, películas, apps modificadas) pero aún vacíos.
+>
+> Quiero que la conviertas en un **panel de control maestro profesional** que me permita administrar todas esas secciones y futuras páginas desde un solo lugar, manteniendo y mejorando lo que ya funciona.
+>
+> **Objetivos principales:**
+>
+> 1. Mantener la API de fútbol y transmisiones en vivo tal como están, pero integrarlas al panel con opciones de edición y control.
+> 2. Activar y completar los apartados vacíos (música, películas, apps modificadas) para que también puedan mostrar y administrar contenido desde el panel.
+> 3. Permitir agregar nuevas secciones fácilmente desde el panel.
+> 4. Conectar todas las secciones a un **sistema central de API** para enviar/recibir datos.
+>
+> **Funciones que debe tener el panel:**
+>
+> * **Login/registro seguro** con roles (admin/usuario) y autenticación por JWT.
+> * **Generador de API Keys** únicas por usuario y/o sección, con control de permisos y límite de uso.
+> * **Editor visual** para modificar y actualizar el contenido de cada sección y publicarlo directamente.
+> * **Subida de archivos** (imágenes, videos, scripts) con historial de versiones.
+> * **Dashboard con gráficas y estadísticas** (visitas, uso de API, usuarios activos, errores).
+> * **Sistema de notificaciones internas** para cambios importantes, errores y alertas.
+> * **Programador de publicaciones** para que se actualicen de forma automática.
+> * **Respaldos automáticos** de base de datos y archivos.
+> * **Modo oscuro** y diseño moderno responsive con TailwindCSS.
+>
+> **Funciones extra opcionales:**
+>
+> * Integración de pagos (PayPal y Stripe) para vender contenido o suscripciones.
+> * Autenticación con Google/Facebook (OAuth).
+> * Chat interno o sistema de soporte/tickets.
+>
+> **Requisitos técnicos:**
+>
+> * Mantener compatibilidad con la estructura de mi página actual.
+> * Código limpio, modular y documentado.
+> * Seguridad contra inyección SQL, XSS y CSRF.
+> * Que pueda ejecutarse en **Termux, VPS o Replit** sin cambios grandes.
+> * Preparado para empaquetarse como APK (WebView + API).
+>
+> **Flujo de desarrollo:**
+>
+> 1. Revisar mi código actual y detectar las partes que pueden mejorarse.
+> 2. Crear la base del panel (login, base de datos, dashboard).
+> 3. Integrar funciones existentes (API de fútbol, transmisiones).
+> 4. Completar las secciones vacías y añadir nuevas funciones.
+> 5. Optimizar todo para que sea rápido, seguro y fácil de administrar.
