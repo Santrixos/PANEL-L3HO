@@ -104,11 +104,15 @@ def admin():
         flash('Acceso denegado. Se requieren permisos de administrador.', 'error')
         return redirect(url_for('dashboard'))
     
+    # Obtener datos para el panel
     apis = ApiKey.query.all()
     websites = WebsiteControl.query.all()
     users = User.query.all()
     
-    return render_template('admin.html', apis=apis, websites=websites, users=users)
+    # Obtener el usuario actual con sus API keys personales
+    current_user = User.query.get(session.get('user_id'))
+    
+    return render_template('admin.html', apis=apis, websites=websites, users=users, current_user=current_user)
 
 @app.route('/admin/api/add', methods=['POST'])
 def add_api():

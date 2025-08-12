@@ -27,6 +27,9 @@
                     <button class="nav-link" id="nav-websites-tab" data-bs-toggle="tab" data-bs-target="#nav-websites" type="button" role="tab">
                         <i class="fas fa-globe me-2"></i>Control de Sitios Web
                     </button>
+                    <button class="nav-link" id="nav-personal-tab" data-bs-toggle="tab" data-bs-target="#nav-personal" type="button" role="tab">
+                        <i class="fas fa-user-key me-2"></i>Mis API Keys
+                    </button>
                     <button class="nav-link" id="nav-users-tab" data-bs-toggle="tab" data-bs-target="#nav-users" type="button" role="tab">
                         <i class="fas fa-users me-2"></i>Usuarios
                     </button>
@@ -169,6 +172,117 @@
                                         {% endfor %}
                                     </tbody>
                                 </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Personal API Keys Tab -->
+        <div class="tab-pane fade" id="nav-personal" role="tabpanel">
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card futuristic-card mb-4">
+                        <div class="card-header">
+                            <h5><i class="fas fa-user-key me-2"></i>Mis API Keys Personales</h5>
+                            <p class="mb-0 text-muted">Estas son tus claves personales para acceder a los servicios del sistema</p>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="api-key-card p-3 border rounded mb-3">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <div class="icon-circle bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+                                                <i class="fas fa-football-ball"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-1">API Key - Sistema de Fútbol</h6>
+                                                <small class="text-muted">Para acceso a datos de Liga MX</small>
+                                            </div>
+                                        </div>
+                                        <div class="input-group mb-3">
+                                            <input type="password" class="form-control" value="{{ current_user.api_key if current_user and current_user.api_key else 'No generada' }}" id="footballApiKey" readonly>
+                                            <button class="btn btn-outline-secondary" onclick="togglePasswordVisibility('footballApiKey', 'footballEye')" type="button">
+                                                <i class="fas fa-eye" id="footballEye"></i>
+                                            </button>
+                                            <button class="btn btn-outline-primary" onclick="copyToClipboard('footballApiKey')" type="button" title="Copiar">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
+                                        </div>
+                                        <div class="d-flex gap-2 mb-3">
+                                            <span class="badge bg-success">Activa</span>
+                                            <span class="badge bg-info">Liga MX</span>
+                                            <span class="badge bg-warning">Estadísticas</span>
+                                        </div>
+                                        <div class="mt-3">
+                                            <h6 class="small">Endpoints Disponibles:</h6>
+                                            <div class="endpoint-badges">
+                                                <span class="badge bg-light text-dark me-1 mb-1">get_tabla</span>
+                                                <span class="badge bg-light text-dark me-1 mb-1">get_equipos</span>
+                                                <span class="badge bg-light text-dark me-1 mb-1">get_jugadores</span>
+                                                <span class="badge bg-light text-dark me-1 mb-1">get_calendario</span>
+                                                <span class="badge bg-light text-dark me-1 mb-1">get_estadisticas</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="api-key-card p-3 border rounded mb-3">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <div class="icon-circle bg-danger text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+                                                <i class="fas fa-broadcast-tower"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-1">API Key - Transmisiones en Vivo</h6>
+                                                <small class="text-muted">Para streams y transmisiones</small>
+                                            </div>
+                                        </div>
+                                        <div class="input-group mb-3">
+                                            <input type="password" class="form-control" value="{{ current_user.api_key_transmisiones if current_user and current_user.api_key_transmisiones else 'No generada' }}" id="streamApiKey" readonly>
+                                            <button class="btn btn-outline-secondary" onclick="togglePasswordVisibility('streamApiKey', 'streamEye')" type="button">
+                                                <i class="fas fa-eye" id="streamEye"></i>
+                                            </button>
+                                            <button class="btn btn-outline-primary" onclick="copyToClipboard('streamApiKey')" type="button" title="Copiar">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
+                                        </div>
+                                        <div class="d-flex gap-2 mb-3">
+                                            <span class="badge bg-danger">Streams</span>
+                                            <span class="badge bg-info">En Vivo</span>
+                                            <span class="badge bg-warning">Transmisiones</span>
+                                        </div>
+                                        <div class="mt-3">
+                                            <h6 class="small">Endpoints Disponibles:</h6>
+                                            <div class="endpoint-badges">
+                                                <span class="badge bg-light text-dark me-1 mb-1">get_streams</span>
+                                                <span class="badge bg-light text-dark me-1 mb-1">get_live_matches</span>
+                                                <span class="badge bg-light text-dark me-1 mb-1">create_stream</span>
+                                                <span class="badge bg-light text-dark me-1 mb-1">manage_broadcast</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Información de Uso -->
+                            <div class="row mt-4">
+                                <div class="col-12">
+                                    <div class="alert alert-info">
+                                        <h6><i class="fas fa-info-circle me-2"></i>Cómo usar tus API Keys</h6>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <strong>Para hacer peticiones:</strong>
+                                                <pre class="bg-dark p-2 mt-2 rounded small"><code>Authorization: Bearer TU_API_KEY</code></pre>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <strong>URL Base:</strong>
+                                                <pre class="bg-dark p-2 mt-2 rounded small"><code>{{ request.url_root }}api/football/</code></pre>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -608,6 +722,48 @@ function filterAPIs() {
             row.style.display = matchesSearch && matchesCategory ? '' : 'none';
         });
     }
+}
+
+// Funciones para API Keys personales
+function togglePasswordVisibility(inputId, iconId) {
+    const input = document.getElementById(inputId);
+    const icon = document.getElementById(iconId);
+    
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'fas fa-eye-slash';
+    } else {
+        input.type = 'password';
+        icon.className = 'fas fa-eye';
+    }
+}
+
+function copyToClipboard(inputId) {
+    const input = document.getElementById(inputId);
+    const originalType = input.type;
+    
+    // Temporalmente mostrar el texto para poder copiarlo
+    input.type = 'text';
+    input.select();
+    input.setSelectionRange(0, 99999);
+    
+    try {
+        document.execCommand('copy');
+        // Mostrar mensaje de éxito
+        const button = event.target.closest('button');
+        const originalIcon = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-check text-success"></i>';
+        
+        setTimeout(() => {
+            button.innerHTML = originalIcon;
+        }, 2000);
+        
+    } catch (err) {
+        alert('No se pudo copiar al portapapeles');
+    }
+    
+    // Restaurar el tipo original
+    input.type = originalType;
 }
 
 // Agregar filtros a la tabla
