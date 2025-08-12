@@ -265,10 +265,11 @@ class FutbolService:
                 return self._get_tabla_ligamx_oficial()
             
             equipos = []
-            tabla_rows = tabla_container.find_all('tr')[1:]  # Saltar header
+            # Usar find_all desde soup, no desde tabla_container
+            tabla_rows = soup.find_all('tr')[1:] if soup.find_all('tr') else []  # Saltar header
             
             for posicion, row in enumerate(tabla_rows[:18], 1):
-                cells = row.find_all(['td', 'th'])
+                cells = row.find_all(['td', 'th']) if hasattr(row, 'find_all') else []
                 if len(cells) >= 8:
                     try:
                         # Extraer datos básicos
@@ -358,7 +359,8 @@ class FutbolService:
         try:
             if equipo_id not in self.equipos_ligamx:
                 # Intentar encontrar por nombre
-                equipo_id = self._find_team_by_name(equipo_id)
+                found_id = self._find_team_by_name(equipo_id)
+                equipo_id = found_id if found_id else equipo_id
                 
             if not equipo_id or equipo_id not in self.equipos_ligamx:
                 return {
@@ -439,7 +441,8 @@ class FutbolService:
         """Obtiene la plantilla completa de jugadores de un equipo"""
         try:
             if equipo_id not in self.equipos_ligamx:
-                equipo_id = self._find_team_by_name(equipo_id)
+                found_id = self._find_team_by_name(equipo_id)
+                equipo_id = found_id if found_id else equipo_id
                 
             if not equipo_id:
                 return {
@@ -494,10 +497,11 @@ class FutbolService:
             matches_container = soup.find_all('div', class_='Table__Scroller')
             
             for container in matches_container:
-                match_rows = container.find_all('tr')[1:]  # Saltar header
-                
-                for row in match_rows:
-                    cells = row.find_all(['td', 'th'])
+                if hasattr(container, 'find_all'):
+                    match_rows = container.find_all('tr')[1:]  # Saltar header
+                    
+                    for row in match_rows:
+                        cells = row.find_all(['td', 'th']) if hasattr(row, 'find_all') else []
                     if len(cells) >= 4:
                         try:
                             fecha_cell = cells[0].get_text(strip=True)

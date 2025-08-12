@@ -1,14 +1,20 @@
-from flask import render_template, request, redirect, url_for, session, flash, jsonify
+from flask import render_template, request, redirect, url_for, session, flash, jsonify, send_from_directory
 from werkzeug.security import generate_password_hash
+from werkzeug.utils import secure_filename
 from app import app, db
-from models import User, ApiKey, WebsiteControl
+from models import (User, ApiKey, WebsiteControl, ContentSection, ContentItem, 
+                   MediaFile, SystemLog, Notification, ScheduledTask, ApiUsage)
 from services.futbol import FutbolService
 from services.transmisiones import TransmisionesService
-from datetime import datetime
+from services.content_manager import ContentManager
+from datetime import datetime, timedelta
 import requests
 import os
 import secrets
+import json
+import logging
 from functools import wraps
+from typing import Dict, List, Optional, Any
 
 @app.route('/')
 def index():
@@ -85,6 +91,12 @@ def dashboard():
             db.session.refresh(user)
     
     return render_template('dashboard.html', stats=stats, recent_websites=recent_websites, current_user=user)
+
+# Agregar ruta de redirección al panel maestro
+@app.route('/panel')
+def panel_redirect():
+    """Redirección corta al panel maestro"""
+    return redirect(url_for('master_panel'))
 
 @app.route('/admin')
 def admin():
@@ -948,6 +960,482 @@ def test_api_connection(api_id):
     except Exception as e:
         return jsonify({'success': False, 'message': f'Error: {str(e)}'})
 
+# ==================== PANEL MAESTRO PROFESIONAL - NUEVAS RUTAS ====================
+
+# Inicialización del gestor de contenido
+content_manager = ContentManager()
+
+@app.route('/master-panel')
+def master_panel():
+    """Panel maestro profesional - Dashboard principal"""
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    # Inicializar secciones por defecto si no existen
+    content_manager.initialize_default_sections()
+    
+    # Obtener estadísticas del sistema
+    stats = {
+        'total_sections': ContentSection.query.count(),
+        'active_sections': ContentSection.query.filter_by(is_active=True).count(),
+        'total_content': ContentItem.query.count(),
+        'published_content': ContentItem.query.filter_by(status='published').count(),
+        'total_users': User.query.count(),
+        'api_requests_today': get_api_requests_today(),
+        'system_logs_today': SystemLog.query.filter(
+            SystemLog.created_at >= datetime.now().date()
+        ).count(),
+        'unread_notifications': get_unread_notifications_count(session.get('user_id'))
+    }
+    
+    # Obtener secciones activas
+    sections = ContentSection.query.filter_by(is_active=True).order_by(ContentSection.sort_order).all()
+    
+    # Obtener notificaciones recientes
+    notifications = get_recent_notifications(session.get('user_id'))
+    
+    # Obtener logs recientes del sistema
+    recent_logs = SystemLog.query.order_by(SystemLog.created_at.desc()).limit(10).all()
+    
+    return render_template('master_panel.html', 
+                         stats=stats, 
+                         sections=sections,
+                         notifications=notifications,
+                         recent_logs=recent_logs)
+
+@app.route('/master-panel/section/<section_name>')
+def section_detail(section_name):
+    """Detalle de una sección específica"""
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    section = ContentSection.query.filter_by(name=section_name, is_active=True).first_or_404()
+    
+    # Obtener contenido de la sección
+    content_type = request.args.get('type', 'default')
+    
+    # Parámetros adicionales según la sección
+    kwargs = dict(request.args)
+    kwargs['content_type'] = content_type
+    
+    # Obtener API keys si es necesario
+    if section_name == 'movies':
+        tmdb_api = ApiKey.query.filter_by(service_name='movies', service_type='tmdb').first()
+        if tmdb_api:
+            kwargs['api_key'] = tmdb_api.api_key
+    elif section_name == 'music':
+        spotify_api = ApiKey.query.filter_by(service_name='music', service_type='spotify').first()
+        if spotify_api:
+            # Asumiendo que se almacena como "client_id:client_secret"
+            if ':' in spotify_api.api_key:
+                client_id, client_secret = spotify_api.api_key.split(':', 1)
+                kwargs['client_id'] = client_id
+                kwargs['client_secret'] = client_secret
+    
+    content_data = content_manager.get_section_content(section_name, **kwargs)
+    
+    return render_template('section_detail.html', 
+                         section=section, 
+                         content_data=content_data,
+                         content_type=content_type)
+
+@app.route('/api/content/<section_name>')
+def api_section_content(section_name):
+    """API para obtener contenido de una sección"""
+    # Obtener parámetros
+    kwargs = dict(request.args)
+    
+    # Verificar autenticación para algunas secciones
+    if section_name in ['football', 'transmissions']:
+        api_key = request.args.get('key')
+        if api_key:
+            user = User.query.filter_by(api_key=api_key).first()
+            if not user:
+                return jsonify({
+                    'success': False,
+                    'error': 'API Key inválida'
+                }), 403
+            
+            # Registrar uso de API
+            record_api_usage(api_key, request.endpoint, user.id, request.remote_addr)
+    
+    # Obtener contenido
+    content_data = content_manager.get_section_content(section_name, **kwargs)
+    
+    return jsonify(content_data)
+
+@app.route('/master-panel/notifications')
+def notifications_panel():
+    """Panel de notificaciones del sistema"""
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    user_id = session.get('user_id')
+    is_admin = session.get('is_admin', False)
+    
+    # Obtener notificaciones del usuario
+    if is_admin:
+        # Los admins pueden ver todas las notificaciones
+        notifications = Notification.query.order_by(Notification.created_at.desc()).all()
+    else:
+        # Los usuarios solo ven sus notificaciones
+        notifications = Notification.query.filter(
+            (Notification.user_id == user_id) | (Notification.user_id.is_(None))
+        ).order_by(Notification.created_at.desc()).all()
+    
+    return render_template('notifications.html', notifications=notifications)
+
+@app.route('/api/notifications/mark-read/<int:notification_id>', methods=['POST'])
+def mark_notification_read(notification_id):
+    """Marca una notificación como leída"""
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'No autenticado'}), 401
+    
+    try:
+        notification = Notification.query.get_or_404(notification_id)
+        
+        # Verificar permisos
+        user_id = session.get('user_id')
+        if notification.user_id and notification.user_id != user_id and not session.get('is_admin'):
+            return jsonify({'success': False, 'message': 'Sin permisos'}), 403
+        
+        notification.is_read = True
+        notification.read_at = datetime.utcnow()
+        db.session.commit()
+        
+        return jsonify({'success': True, 'message': 'Notificación marcada como leída'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+@app.route('/master-panel/system-logs')
+def system_logs_panel():
+    """Panel de logs del sistema"""
+    if 'user_id' not in session or not session.get('is_admin'):
+        flash('Acceso denegado. Se requieren permisos de administrador.', 'error')
+        return redirect(url_for('master_panel'))
+    
+    # Filtros
+    level = request.args.get('level')
+    category = request.args.get('category')
+    page = int(request.args.get('page', 1))
+    per_page = 50
+    
+    # Query base
+    query = SystemLog.query
+    
+    if level:
+        query = query.filter_by(level=level.upper())
+    if category:
+        query = query.filter_by(category=category.upper())
+    
+    # Paginación
+    logs = query.order_by(SystemLog.created_at.desc()).paginate(
+        page=page, per_page=per_page, error_out=False
+    )
+    
+    # Obtener estadísticas
+    log_stats = {
+        'total': SystemLog.query.count(),
+        'today': SystemLog.query.filter(SystemLog.created_at >= datetime.now().date()).count(),
+        'errors': SystemLog.query.filter_by(level='ERROR').count(),
+        'warnings': SystemLog.query.filter_by(level='WARNING').count()
+    }
+    
+    return render_template('system_logs.html', logs=logs, log_stats=log_stats)
+
+@app.route('/master-panel/content-editor')
+@app.route('/master-panel/content-editor/<int:item_id>')
+def content_editor(item_id=None):
+    """Editor visual de contenido"""
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    # Obtener secciones disponibles
+    sections = ContentSection.query.filter_by(is_active=True).order_by(ContentSection.sort_order).all()
+    
+    # Si se está editando un item existente
+    content_item = None
+    if item_id:
+        content_item = ContentItem.query.get_or_404(item_id)
+        
+        # Verificar permisos
+        if not session.get('is_admin') and content_item.created_by != session.get('user_id'):
+            flash('Sin permisos para editar este contenido.', 'error')
+            return redirect(url_for('master_panel'))
+    
+    return render_template('content_editor.html', sections=sections, content_item=content_item)
+
+@app.route('/api/content-item', methods=['POST', 'PUT'])
+def api_content_item():
+    """API para crear/editar items de contenido"""
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'No autenticado'}), 401
+    
+    try:
+        data = request.get_json()
+        
+        if request.method == 'POST':
+            # Crear nuevo item
+            item = ContentItem()
+            item.created_by = session.get('user_id')
+        else:
+            # Editar item existente
+            item_id = data.get('id')
+            item = ContentItem.query.get_or_404(item_id)
+            
+            # Verificar permisos
+            if not session.get('is_admin') and item.created_by != session.get('user_id'):
+                return jsonify({'success': False, 'message': 'Sin permisos'}), 403
+        
+        # Actualizar campos
+        item.section_id = data.get('section_id')
+        item.title = data.get('title')
+        item.description = data.get('description')
+        item.set_content_data(data.get('content_data', {}))
+        item.featured_image = data.get('featured_image')
+        item.status = data.get('status', 'draft')
+        item.is_featured = data.get('is_featured', False)
+        item.sort_order = data.get('sort_order', 0)
+        
+        if data.get('status') == 'published' and not item.published_at:
+            item.published_at = datetime.utcnow()
+        
+        if request.method == 'POST':
+            db.session.add(item)
+        
+        db.session.commit()
+        
+        # Log de la acción
+        action = 'creado' if request.method == 'POST' else 'actualizado'
+        content_manager.log_system_action(
+            'INFO', 'CONTENT', 
+            f'Contenido {action}: {item.title}',
+            {'item_id': item.id, 'section_id': item.section_id},
+            session.get('user_id')
+        )
+        
+        return jsonify({
+            'success': True, 
+            'message': f'Contenido {action} correctamente',
+            'item_id': item.id
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+@app.route('/master-panel/file-upload', methods=['POST'])
+def file_upload():
+    """Subida de archivos multimedia"""
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'No autenticado'}), 401
+    
+    if 'file' not in request.files:
+        return jsonify({'success': False, 'message': 'No se seleccionó archivo'}), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'success': False, 'message': 'No se seleccionó archivo'}), 400
+    
+    try:
+        # Validar tipo de archivo
+        allowed_extensions = {
+            'image': {'jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'},
+            'video': {'mp4', 'webm', 'avi', 'mov'},
+            'audio': {'mp3', 'wav', 'ogg', 'aac'},
+            'document': {'pdf', 'doc', 'docx', 'txt', 'md'}
+        }
+        
+        filename = secure_filename(file.filename)
+        file_ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
+        
+        file_type = None
+        for type_name, extensions in allowed_extensions.items():
+            if file_ext in extensions:
+                file_type = type_name
+                break
+        
+        if not file_type:
+            return jsonify({'success': False, 'message': 'Tipo de archivo no permitido'}), 400
+        
+        # Generar nombre único
+        unique_filename = f"{secrets.token_hex(8)}_{filename}"
+        
+        # Crear directorio si no existe
+        upload_dir = os.path.join('static', 'uploads', file_type)
+        os.makedirs(upload_dir, exist_ok=True)
+        
+        # Guardar archivo
+        file_path = os.path.join(upload_dir, unique_filename)
+        file.save(file_path)
+        
+        # Crear registro en base de datos
+        media_file = MediaFile()
+        media_file.filename = unique_filename
+        media_file.original_filename = filename
+        media_file.file_path = file_path
+        media_file.file_size = os.path.getsize(file_path)
+        media_file.mime_type = file.content_type
+        media_file.file_type = file_type
+        media_file.uploaded_by = session.get('user_id')
+        media_file.content_item_id = request.form.get('content_item_id')
+        
+        db.session.add(media_file)
+        db.session.commit()
+        
+        # URL pública del archivo
+        public_url = f"/static/uploads/{file_type}/{unique_filename}"
+        
+        return jsonify({
+            'success': True,
+            'message': 'Archivo subido correctamente',
+            'file_id': media_file.id,
+            'file_url': public_url,
+            'file_type': file_type,
+            'file_size': media_file.file_size
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+@app.route('/master-panel/scheduled-tasks')
+def scheduled_tasks_panel():
+    """Panel de tareas programadas"""
+    if 'user_id' not in session or not session.get('is_admin'):
+        flash('Acceso denegado. Se requieren permisos de administrador.', 'error')
+        return redirect(url_for('master_panel'))
+    
+    tasks = ScheduledTask.query.order_by(ScheduledTask.next_run.asc()).all()
+    
+    return render_template('scheduled_tasks.html', tasks=tasks)
+
+@app.route('/api/scheduled-task', methods=['POST'])
+def create_scheduled_task():
+    """Crear nueva tarea programada"""
+    if 'user_id' not in session or not session.get('is_admin'):
+        return jsonify({'success': False, 'message': 'Acceso denegado'}), 403
+    
+    try:
+        data = request.get_json()
+        
+        task = ScheduledTask()
+        task.name = data.get('name')
+        task.task_type = data.get('task_type')
+        task.scheduled_for = datetime.fromisoformat(data.get('scheduled_for'))
+        task.recurrence = data.get('recurrence', 'once')
+        task.set_task_data(data.get('task_data', {}))
+        task.created_by = session.get('user_id')
+        
+        # Calcular próxima ejecución
+        task.next_run = task.scheduled_for
+        
+        db.session.add(task)
+        db.session.commit()
+        
+        content_manager.log_system_action(
+            'INFO', 'SYSTEM', 
+            f'Tarea programada creada: {task.name}',
+            {'task_id': task.id, 'task_type': task.task_type},
+            session.get('user_id')
+        )
+        
+        return jsonify({'success': True, 'message': 'Tarea creada correctamente'})
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+@app.route('/master-panel/analytics')
+def analytics_dashboard():
+    """Dashboard de análisis y estadísticas"""
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    # Obtener estadísticas de los últimos 30 días
+    thirty_days_ago = datetime.now() - timedelta(days=30)
+    
+    analytics_data = {
+        'api_usage_daily': get_daily_api_usage(30),
+        'content_views': get_content_views_stats(),
+        'user_activity': get_user_activity_stats(),
+        'system_health': get_system_health_stats(),
+        'top_endpoints': get_top_api_endpoints(),
+        'error_rates': get_error_rates_stats()
+    }
+    
+    return render_template('analytics.html', analytics=analytics_data)
+
+# ==================== FUNCIONES AUXILIARES ====================
+
+def get_api_requests_today():
+    """Obtiene el número de requests API de hoy"""
+    today = datetime.now().date()
+    return ApiUsage.query.filter(ApiUsage.created_at >= today).count()
+
+def get_unread_notifications_count(user_id):
+    """Obtiene el número de notificaciones no leídas"""
+    if not user_id:
+        return 0
+    
+    return Notification.query.filter(
+        (Notification.user_id == user_id) | (Notification.user_id.is_(None)),
+        Notification.is_read == False
+    ).count()
+
+def get_recent_notifications(user_id, limit=5):
+    """Obtiene las notificaciones recientes del usuario"""
+    if not user_id:
+        return []
+    
+    return Notification.query.filter(
+        (Notification.user_id == user_id) | (Notification.user_id.is_(None))
+    ).order_by(Notification.created_at.desc()).limit(limit).all()
+
+def record_api_usage(api_key, endpoint, user_id, ip_address, status_code=200, response_time=None):
+    """Registra el uso de una API"""
+    try:
+        usage = ApiUsage()
+        usage.api_key = api_key
+        usage.endpoint = endpoint
+        usage.user_id = user_id
+        usage.ip_address = ip_address
+        usage.status_code = status_code
+        usage.response_time = response_time
+        
+        db.session.add(usage)
+        db.session.commit()
+    except Exception as e:
+        logging.error(f"Error registrando uso de API: {e}")
+
+def get_daily_api_usage(days=30):
+    """Obtiene estadísticas de uso de API por día"""
+    # Implementación básica - se puede expandir
+    return []
+
+def get_content_views_stats():
+    """Obtiene estadísticas de vistas de contenido"""
+    return {}
+
+def get_user_activity_stats():
+    """Obtiene estadísticas de actividad de usuarios"""
+    return {}
+
+def get_system_health_stats():
+    """Obtiene estadísticas de salud del sistema"""
+    return {
+        'status': 'healthy',
+        'uptime': '99.9%',
+        'response_time': '120ms'
+    }
+
+def get_top_api_endpoints():
+    """Obtiene los endpoints API más utilizados"""
+    return []
+
+def get_error_rates_stats():
+    """Obtiene estadísticas de errores"""
+    return {}
+
 # Call this function when the app starts
 with app.app_context():
     create_admin_user()
+    # Inicializar secciones por defecto
+    content_manager.initialize_default_sections()

@@ -1,0 +1,301 @@
+{% extends "base.html" %}
+
+{% block title %}Panel Maestro - L3HO{% endblock %}
+
+{% block extra_css %}
+<style>
+    .master-panel-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+    }
+    
+    .stats-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border-left: 4px solid #667eea;
+        transition: transform 0.3s ease;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    .section-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        border-left: 4px solid;
+    }
+    
+    .section-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+    }
+    
+    .section-card.primary { border-left-color: #007bff; }
+    .section-card.success { border-left-color: #28a745; }
+    .section-card.danger { border-left-color: #dc3545; }
+    .section-card.warning { border-left-color: #ffc107; }
+    .section-card.info { border-left-color: #17a2b8; }
+    
+    .notification-badge {
+        background: #dc3545;
+        color: white;
+        border-radius: 50%;
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        min-width: 1.5rem;
+        text-align: center;
+    }
+    
+    .quick-actions {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin: 1rem 0;
+    }
+    
+    .activity-log {
+        max-height: 300px;
+        overflow-y: auto;
+        background: white;
+        border-radius: 8px;
+        padding: 1rem;
+    }
+    
+    .log-entry {
+        padding: 0.5rem;
+        border-bottom: 1px solid #eee;
+        font-size: 0.9rem;
+    }
+    
+    .log-entry:last-child {
+        border-bottom: none;
+    }
+    
+    .log-level-INFO { color: #28a745; }
+    .log-level-WARNING { color: #ffc107; }
+    .log-level-ERROR { color: #dc3545; }
+    .log-level-CRITICAL { color: #dc3545; font-weight: bold; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header del Panel Maestro -->
+<div class="master-panel-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1><i class="fas fa-tachometer-alt me-3"></i>Panel Maestro Profesional</h1>
+                <p class="mb-0">Centro de control centralizado para todas las secciones de L3HO</p>
+            </div>
+            <div class="col-md-4 text-end">
+                {% if unread_notifications > 0 %}
+                <a href="{{ url_for('notifications_panel') }}" class="btn btn-outline-light">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-badge">{{ unread_notifications }}</span>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- Estadísticas Principales -->
+        <div class="col-md-3 mb-4">
+            <div class="stats-card">
+                <h5><i class="fas fa-layer-group text-primary"></i> Secciones</h5>
+                <h2>{{ stats.active_sections }}/{{ stats.total_sections }}</h2>
+                <small class="text-muted">Secciones activas</small>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-4">
+            <div class="stats-card">
+                <h5><i class="fas fa-file-alt text-success"></i> Contenido</h5>
+                <h2>{{ stats.published_content }}</h2>
+                <small class="text-muted">{{ stats.total_content }} total</small>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-4">
+            <div class="stats-card">
+                <h5><i class="fas fa-chart-line text-warning"></i> APIs Hoy</h5>
+                <h2>{{ stats.api_requests_today }}</h2>
+                <small class="text-muted">Solicitudes</small>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-4">
+            <div class="stats-card">
+                <h5><i class="fas fa-users text-info"></i> Usuarios</h5>
+                <h2>{{ stats.total_users }}</h2>
+                <small class="text-muted">Registrados</small>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Acciones Rápidas -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="quick-actions">
+                <h5 class="mb-3"><i class="fas fa-bolt"></i> Acciones Rápidas</h5>
+                <div class="btn-group" role="group">
+                    <a href="{{ url_for('content_editor') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Nuevo Contenido
+                    </a>
+                    <a href="{{ url_for('file_upload') }}" class="btn btn-success">
+                        <i class="fas fa-upload"></i> Subir Archivos
+                    </a>
+                    {% if session.is_admin %}
+                    <a href="{{ url_for('system_logs_panel') }}" class="btn btn-warning">
+                        <i class="fas fa-list-alt"></i> Ver Logs
+                    </a>
+                    <a href="{{ url_for('scheduled_tasks_panel') }}" class="btn btn-info">
+                        <i class="fas fa-clock"></i> Tareas Programadas
+                    </a>
+                    {% endif %}
+                    <a href="{{ url_for('analytics_dashboard') }}" class="btn btn-secondary">
+                        <i class="fas fa-chart-bar"></i> Analytics
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Secciones de Contenido -->
+        <div class="col-md-8">
+            <h4 class="mb-3"><i class="fas fa-th-large"></i> Secciones de Contenido</h4>
+            
+            {% for section in sections %}
+            <div class="section-card {{ section.color_scheme }}">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h5>
+                            <i class="fas {{ section.icon }}"></i>
+                            {{ section.title }}
+                        </h5>
+                        <p class="text-muted mb-2">{{ section.description }}</p>
+                        <small>
+                            <span class="badge badge-success">Activo</span>
+                            <span class="text-muted ms-2">
+                                {{ section.content_items.filter_by(status='published').count() }} elementos publicados
+                            </span>
+                        </small>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <div class="btn-group">
+                            <a href="{{ url_for('section_detail', section_name=section.name) }}" 
+                               class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-eye"></i> Ver
+                            </a>
+                            {% if section.name in ['football', 'transmissions'] %}
+                            <a href="{{ url_for('api_section_content', section_name=section.name) }}?key={{ current_user.api_key }}" 
+                               class="btn btn-outline-success btn-sm" target="_blank">
+                                <i class="fas fa-code"></i> API
+                            </a>
+                            {% endif %}
+                            {% if session.is_admin %}
+                            <button class="btn btn-outline-secondary btn-sm">
+                                <i class="fas fa-cog"></i> Configurar
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Panel Lateral -->
+        <div class="col-md-4">
+            <!-- Notificaciones Recientes -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6><i class="fas fa-bell"></i> Notificaciones Recientes</h6>
+                </div>
+                <div class="card-body">
+                    {% if notifications %}
+                    {% for notification in notifications %}
+                    <div class="alert alert-{{ notification.notification_type }} alert-dismissible fade show" role="alert">
+                        <strong>{{ notification.title }}</strong>
+                        <p class="mb-1">{{ notification.message }}</p>
+                        <small class="text-muted">{{ notification.created_at.strftime('%d/%m %H:%M') }}</small>
+                        {% if not notification.is_read %}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" 
+                                onclick="markAsRead({{ notification.id }})"></button>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                    <a href="{{ url_for('notifications_panel') }}" class="btn btn-sm btn-outline-primary w-100">
+                        Ver todas las notificaciones
+                    </a>
+                    {% else %}
+                    <p class="text-muted">No hay notificaciones recientes</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Actividad del Sistema -->
+            <div class="card">
+                <div class="card-header">
+                    <h6><i class="fas fa-activity"></i> Actividad del Sistema</h6>
+                </div>
+                <div class="card-body">
+                    <div class="activity-log">
+                        {% if recent_logs %}
+                        {% for log in recent_logs %}
+                        <div class="log-entry">
+                            <span class="log-level-{{ log.level }}">
+                                <i class="fas fa-circle" style="font-size: 0.5rem;"></i>
+                            </span>
+                            <strong>{{ log.category }}:</strong>
+                            {{ log.message }}
+                            <br>
+                            <small class="text-muted">{{ log.created_at.strftime('%d/%m %H:%M:%S') }}</small>
+                        </div>
+                        {% endfor %}
+                        {% else %}
+                        <p class="text-muted">No hay actividad reciente</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function markAsRead(notificationId) {
+    fetch(`/api/notifications/mark-read/${notificationId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            console.log('Notificación marcada como leída');
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+// Auto-actualizar estadísticas cada 30 segundos
+setInterval(() => {
+    location.reload();
+}, 30000);
+</script>
+{% endblock %}
