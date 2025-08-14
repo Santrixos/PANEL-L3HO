@@ -62,7 +62,19 @@
         }
         
         .sidebar-transition {
-            transition: all 0.3s ease;
+            transition: transform 0.3s ease;
+        }
+        
+        /* Mejoras para móvil */
+        @media (max-width: 1023px) {
+            .sidebar-transition {
+                transition: transform 0.3s ease;
+            }
+        }
+        
+        /* Evitar scroll horizontal en móvil */
+        body {
+            overflow-x: hidden;
         }
         
         /* Animaciones personalizadas */
@@ -96,8 +108,11 @@
 </head>
 <body class="h-full bg-gray-50 dark:bg-gray-900">
     <div class="min-h-full">
+        <!-- Overlay para móvil -->
+        <div class="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden hidden" id="sidebar-overlay"></div>
+        
         <!-- Sidebar -->
-        <nav class="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 shadow-lg sidebar-transition" id="sidebar">
+        <nav class="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 shadow-lg sidebar-transition transform -translate-x-full lg:translate-x-0" id="sidebar">
             <div class="flex flex-col h-full">
                 <!-- Logo -->
                 <div class="flex items-center justify-center h-16 px-4 bg-primary-600">
@@ -187,22 +202,31 @@
         </nav>
         
         <!-- Contenido principal -->
-        <main class="pl-64">
+        <main class="lg:pl-64">
             <!-- Header -->
             <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
-                <div class="px-6 py-4">
+                <div class="px-4 sm:px-6 py-4">
                     <div class="flex items-center justify-between">
-                        <div>
-                            <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
-                                {% block page_title %}Dashboard{% endblock %}
-                            </h2>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">
-                                {% block page_description %}Panel de control profesional{% endblock %}
-                            </p>
+                        <div class="flex items-center space-x-4">
+                            <!-- Botón menú móvil -->
+                            <button id="mobile-menu-button" class="lg:hidden p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                                </svg>
+                            </button>
+                            
+                            <div>
+                                <h2 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
+                                    {% block page_title %}Dashboard{% endblock %}
+                                </h2>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 hidden sm:block">
+                                    {% block page_description %}Panel de control profesional{% endblock %}
+                                </p>
+                            </div>
                         </div>
                         
                         <!-- Controles del header -->
-                        <div class="flex items-center space-x-4">
+                        <div class="flex items-center space-x-2 sm:space-x-4">
                             <!-- Toggle tema -->
                             <button id="theme-toggle" class="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
                                 <i class="fas fa-moon dark:hidden"></i>
@@ -222,7 +246,7 @@
             </header>
             
             <!-- Contenido de la página -->
-            <div class="p-6">
+            <div class="p-4 sm:p-6">
                 <!-- Mensajes Flash -->
                 {% with messages = get_flashed_messages(with_categories=true) %}
                     {% if messages %}
@@ -257,6 +281,65 @@
     
     <!-- Scripts -->
     <script>
+        // Variables para el menú móvil
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        
+        // Toggle menú móvil
+        function toggleMobileMenu() {
+            const isOpen = !sidebar.classList.contains('-translate-x-full');
+            
+            if (isOpen) {
+                closeMobileMenu();
+            } else {
+                openMobileMenu();
+            }
+        }
+        
+        function openMobileMenu() {
+            sidebar.classList.remove('-translate-x-full');
+            sidebarOverlay.classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
+        }
+        
+        function closeMobileMenu() {
+            sidebar.classList.add('-translate-x-full');
+            sidebarOverlay.classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+        }
+        
+        // Event listeners para el menú móvil
+        mobileMenuButton.addEventListener('click', toggleMobileMenu);
+        sidebarOverlay.addEventListener('click', closeMobileMenu);
+        
+        // Cerrar menú al hacer clic en un enlace (solo en móvil)
+        document.querySelectorAll('#sidebar a').forEach(link => {
+            link.addEventListener('click', function() {
+                if (window.innerWidth < 1024) { // lg breakpoint
+                    closeMobileMenu();
+                }
+            });
+        });
+        
+        // Cerrar menú al cambiar tamaño de pantalla
+        window.addEventListener('resize', function() {
+            if (window.innerWidth >= 1024) { // lg breakpoint
+                sidebar.classList.remove('-translate-x-full');
+                sidebarOverlay.classList.add('hidden');
+                document.body.classList.remove('overflow-hidden');
+            } else {
+                closeMobileMenu();
+            }
+        });
+        
+        // Cerrar menú con tecla Escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && window.innerWidth < 1024) {
+                closeMobileMenu();
+            }
+        });
+        
         // Toggle tema oscuro/claro
         document.getElementById('theme-toggle').addEventListener('click', function() {
             document.documentElement.classList.toggle('dark');
