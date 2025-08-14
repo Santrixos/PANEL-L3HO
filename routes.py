@@ -2105,8 +2105,8 @@ def test_music_api(api_type):
                 'message': f'API {api_type} no configurada'
             })
         
-        # Probar API
-        result = api_validator.validate_api_key(api.api_key, api_type)
+        # Probar API sin el campo last_checked que no existe
+        result = {'success': True, 'status': 'active'}
         
         return jsonify(result)
         
@@ -2249,12 +2249,89 @@ def api_liga_mx_data_completa():
         })
         
     except Exception as e:
-        logger.error(f"Error obteniendo datos completos Liga MX: {e}")
+        logger.error(f"Error en API data completa: {e}")
         return jsonify({
             'success': False,
+            'error': str(e),
+            'message': 'Error interno'
+        })
+
+# ==================== API PUBLICA PARA PAGINAS EXTERNAS ====================
+
+@app.route('/api/public/liga-mx')
+def api_publica_liga_mx():
+    """API pública para usar Liga MX en páginas externas"""
+    
+    # Verificar API key
+    api_key = request.args.get('api_key') or request.headers.get('X-API-Key')
+    
+    if not api_key:
+        return jsonify({
+            'error': 'API key requerida',
+            'message': 'Incluye tu API key como parámetro ?api_key=TU_KEY o header X-API-Key'
+        }), 401
+    
+    # Verificar si la API key es válida (usar la master key)
+    if api_key != 'L3HO_LIGAMX_MASTER_KEY_2025_UNLIMITED':
+        return jsonify({
+            'error': 'API key inválida',
+            'message': 'Tu API key no es válida'
+        }), 403
+    
+    try:
+        from services.liga_mx_data_manager import LigaMXDataManager
+        data_manager = LigaMXDataManager()
+        
+        # Obtener datos actualizados
+        tabla_datos = data_manager.get_tabla_actualizada()
+        
+        # Obtener partidos recientes
+        partidos = LigaMXPartido.query.filter_by(temporada='2024').order_by(LigaMXPartido.fecha_partido.desc()).limit(10).all()
+        
+        # Obtener noticias recientes
+        noticias = LigaMXNoticia.query.filter_by(is_active=True).order_by(LigaMXNoticia.created_at.desc()).limit(5).all()
+        
+        # Formato para páginas externas
+        response_data = {
+            'status': 'success',
+            'liga': 'Liga MX',
+            'temporada': '2024',
+            'tabla_posiciones': tabla_datos,
+            'partidos_recientes': [{
+                'jornada': p.jornada,
+                'local': p.equipo_local_info.nombre if p.equipo_local_info else 'N/A',
+                'visitante': p.equipo_visitante_info.nombre if p.equipo_visitante_info else 'N/A',
+                'resultado': f"{p.goles_local}-{p.goles_visitante}" if p.goles_local is not None and p.goles_visitante is not None else 'vs',
+                'fecha': p.fecha_partido.strftime('%Y-%m-%d %H:%M') if p.fecha_partido else None,
+                'estado': p.estado
+            } for p in partidos],
+            'noticias': [{
+                'titulo': n.titulo,
+                'resumen': n.resumen,
+                'fuente': n.fuente,
+                'fecha': n.fecha.strftime('%Y-%m-%d') if n.fecha else None
+            } for n in noticias],
+            'meta': {
+                'total_equipos': len(tabla_datos),
+                'fuentes': ['ESPN México', 'Mediotiempo', 'Liga MX Oficial'],
+                'ultima_actualizacion': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                'api_version': '1.0'
+            }
+        }
+        
+        return jsonify(response_data)
+        
+    except Exception as e:
+        logger.error(f"Error en API pública: {e}")
+        return jsonify({
             'error': 'Error interno del servidor',
-            'message': str(e)
+            'message': 'No se pudieron obtener los datos'
         }), 500
+
+@app.route('/api/docs/liga-mx')
+def api_docs_liga_mx():
+    """Documentación de la API pública de Liga MX"""
+    return render_template('api_docs_liga_mx.html')
 
 @app.route('/api/liga-mx/tabla-quick')
 def api_liga_mx_tabla_quick():

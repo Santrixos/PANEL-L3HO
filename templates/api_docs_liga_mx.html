@@ -1,0 +1,351 @@
+{% extends 'base_new.html' %}
+
+{% block title %}API Liga MX - Documentación{% endblock %}
+
+{% block content %}
+<div class="flex-1 p-6 bg-gray-50">
+    <!-- Header -->
+    <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">
+                    <i class="fas fa-code text-blue-600 mr-3"></i>
+                    API Liga MX - Documentación
+                </h1>
+                <p class="text-gray-600 mt-2">API pública para obtener datos reales de Liga MX</p>
+            </div>
+            <div class="bg-green-100 px-4 py-2 rounded-lg">
+                <span class="text-green-800 font-medium">
+                    <i class="fas fa-check-circle mr-1"></i>
+                    API Activa
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Información principal -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Tu API Key -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-key text-yellow-600 mr-2"></i>
+                    Tu API Key
+                </h2>
+                
+                <div class="bg-gray-50 border rounded-lg p-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">API Key Personal:</label>
+                    <div class="flex items-center space-x-3">
+                        <code class="flex-1 bg-gray-800 text-green-400 px-3 py-2 rounded font-mono text-sm">
+                            L3HO_LIGAMX_MASTER_KEY_2025_UNLIMITED
+                        </code>
+                        <button onclick="copyApiKey()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm">
+                            <i class="fas fa-copy mr-1"></i>Copiar
+                        </button>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-2">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Esta es tu API key maestra sin límites de uso
+                    </p>
+                </div>
+            </div>
+
+            <!-- Endpoint principal -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-globe text-green-600 mr-2"></i>
+                    Endpoint Principal
+                </h2>
+                
+                <div class="bg-gray-900 rounded-lg p-4 mb-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-green-400 font-mono text-sm">GET</span>
+                        <button onclick="copyUrl()" class="text-gray-400 hover:text-white">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                    <code class="text-white font-mono text-sm">
+                        {{ request.url_root }}api/public/liga-mx?api_key=TU_API_KEY
+                    </code>
+                </div>
+
+                <h3 class="font-semibold text-gray-900 mb-3">Parámetros:</h3>
+                <div class="space-y-3">
+                    <div class="border rounded-lg p-3">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <code class="bg-gray-100 px-2 py-1 rounded text-sm">api_key</code>
+                                <span class="ml-2 text-sm text-red-600">requerido</span>
+                            </div>
+                            <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">string</span>
+                        </div>
+                        <p class="text-sm text-gray-600 mt-1">Tu API key personal para autenticación</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ejemplo de respuesta -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-file-code text-purple-600 mr-2"></i>
+                    Ejemplo de Respuesta
+                </h2>
+                
+                <div class="bg-gray-900 rounded-lg p-4 overflow-x-auto">
+                    <pre class="text-green-400 text-sm"><code>{
+  "status": "success",
+  "liga": "Liga MX",
+  "temporada": "2024",
+  "tabla_posiciones": [
+    {
+      "posicion": 1,
+      "equipo": "Cruz Azul",
+      "partidos_jugados": 17,
+      "ganados": 12,
+      "empatados": 3,
+      "perdidos": 2,
+      "goles_favor": 38,
+      "goles_contra": 15,
+      "diferencia_goles": 23,
+      "puntos": 39,
+      "fuente": "ESPN México"
+    }
+  ],
+  "partidos_recientes": [
+    {
+      "jornada": 17,
+      "local": "América",
+      "visitante": "Cruz Azul",
+      "resultado": "2-1",
+      "fecha": "2024-08-14 20:00",
+      "estado": "finalizado"
+    }
+  ],
+  "noticias": [
+    {
+      "titulo": "Cruz Azul lidera la tabla general",
+      "resumen": "La Máquina se mantiene en el primer lugar...",
+      "fuente": "ESPN México",
+      "fecha": "2024-08-14"
+    }
+  ],
+  "meta": {
+    "total_equipos": 18,
+    "fuentes": ["ESPN México", "Mediotiempo", "Liga MX Oficial"],
+    "ultima_actualizacion": "2024-08-14 15:30:00",
+    "api_version": "1.0"
+  }
+}</code></pre>
+                </div>
+            </div>
+
+            <!-- Ejemplos de uso -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-terminal text-orange-600 mr-2"></i>
+                    Ejemplos de Uso
+                </h2>
+                
+                <div class="space-y-4">
+                    <!-- JavaScript -->
+                    <div>
+                        <h3 class="font-semibold text-gray-800 mb-2">JavaScript (Fetch)</h3>
+                        <div class="bg-gray-900 rounded-lg p-4">
+                            <pre class="text-green-400 text-sm"><code>const apiKey = 'L3HO_LIGAMX_MASTER_KEY_2025_UNLIMITED';
+const url = `{{ request.url_root }}api/public/liga-mx?api_key=${apiKey}`;
+
+fetch(url)
+  .then(response => response.json())
+  .then(data => {
+    console.log('Tabla Liga MX:', data.tabla_posiciones);
+    console.log('Partidos:', data.partidos_recientes);
+  })
+  .catch(error => console.error('Error:', error));</code></pre>
+                        </div>
+                    </div>
+
+                    <!-- cURL -->
+                    <div>
+                        <h3 class="font-semibold text-gray-800 mb-2">cURL</h3>
+                        <div class="bg-gray-900 rounded-lg p-4">
+                            <pre class="text-green-400 text-sm"><code>curl -X GET "{{ request.url_root }}api/public/liga-mx?api_key=L3HO_LIGAMX_MASTER_KEY_2025_UNLIMITED" \
+  -H "Accept: application/json"</code></pre>
+                        </div>
+                    </div>
+
+                    <!-- Python -->
+                    <div>
+                        <h3 class="font-semibold text-gray-800 mb-2">Python (requests)</h3>
+                        <div class="bg-gray-900 rounded-lg p-4">
+                            <pre class="text-green-400 text-sm"><code>import requests
+
+api_key = 'L3HO_LIGAMX_MASTER_KEY_2025_UNLIMITED'
+url = f'{{ request.url_root }}api/public/liga-mx?api_key={api_key}'
+
+response = requests.get(url)
+data = response.json()
+
+print("Tabla Liga MX:")
+for equipo in data['tabla_posiciones']:
+    print(f"{equipo['posicion']}. {equipo['equipo']} - {equipo['puntos']} pts")</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel lateral -->
+        <div class="space-y-6">
+            <!-- Estado de la API -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h3 class="font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-chart-line text-blue-600 mr-2"></i>
+                    Estado de la API
+                </h3>
+                
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-600">Estado:</span>
+                        <span class="text-sm bg-green-100 text-green-800 px-2 py-1 rounded">Activa</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-600">Versión:</span>
+                        <span class="text-sm font-mono">v1.0</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-600">Límite:</span>
+                        <span class="text-sm text-green-600">Sin límites</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-600">Datos:</span>
+                        <span class="text-sm text-blue-600">Tiempo real</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fuentes de datos -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h3 class="font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-database text-green-600 mr-2"></i>
+                    Fuentes de Datos
+                </h3>
+                
+                <div class="space-y-2">
+                    <div class="flex items-center text-sm">
+                        <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                        ESPN México
+                    </div>
+                    <div class="flex items-center text-sm">
+                        <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                        Mediotiempo
+                    </div>
+                    <div class="flex items-center text-sm">
+                        <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                        Liga MX Oficial
+                    </div>
+                    <div class="flex items-center text-sm">
+                        <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                        Futbol Total
+                    </div>
+                </div>
+            </div>
+
+            <!-- Probar API -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h3 class="font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-play-circle text-blue-600 mr-2"></i>
+                    Probar API
+                </h3>
+                
+                <button onclick="testApi()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
+                    <i class="fas fa-bolt mr-2"></i>
+                    Hacer Prueba
+                </button>
+                
+                <div id="testResult" class="mt-4 hidden">
+                    <div class="bg-gray-50 rounded p-3">
+                        <div class="text-sm text-gray-600 mb-2">Resultado:</div>
+                        <pre id="testOutput" class="text-xs bg-gray-800 text-green-400 p-2 rounded overflow-x-auto"></pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Soporte -->
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                <h3 class="font-semibold text-blue-900 mb-2">
+                    <i class="fas fa-question-circle mr-2"></i>
+                    ¿Necesitas ayuda?
+                </h3>
+                <p class="text-sm text-blue-700 mb-3">
+                    Si tienes problemas con la API, puedes:
+                </p>
+                <ul class="text-sm text-blue-700 space-y-1">
+                    <li>• Verificar tu API key</li>
+                    <li>• Revisar la documentación</li>
+                    <li>• Contactar soporte técnico</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function copyApiKey() {
+    const apiKey = 'L3HO_LIGAMX_MASTER_KEY_2025_UNLIMITED';
+    navigator.clipboard.writeText(apiKey).then(() => {
+        showMessage('API Key copiada al portapapeles', 'success');
+    });
+}
+
+function copyUrl() {
+    const url = '{{ request.url_root }}api/public/liga-mx?api_key=TU_API_KEY';
+    navigator.clipboard.writeText(url).then(() => {
+        showMessage('URL copiada al portapapeles', 'success');
+    });
+}
+
+function testApi() {
+    const button = event.target;
+    const resultDiv = document.getElementById('testResult');
+    const outputPre = document.getElementById('testOutput');
+    
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Probando...';
+    
+    const apiKey = 'L3HO_LIGAMX_MASTER_KEY_2025_UNLIMITED';
+    const url = `{{ request.url_root }}api/public/liga-mx?api_key=${apiKey}`;
+    
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            outputPre.textContent = JSON.stringify(data, null, 2);
+            resultDiv.classList.remove('hidden');
+            showMessage('¡API funcionando correctamente!', 'success');
+        })
+        .catch(error => {
+            outputPre.textContent = 'Error: ' + error.message;
+            resultDiv.classList.remove('hidden');
+            showMessage('Error al probar la API', 'error');
+        })
+        .finally(() => {
+            button.disabled = false;
+            button.innerHTML = '<i class="fas fa-bolt mr-2"></i>Hacer Prueba';
+        });
+}
+
+function showMessage(message, type) {
+    const div = document.createElement('div');
+    div.className = `fixed top-4 right-4 px-4 py-3 rounded-lg shadow-lg z-50 ${
+        type === 'success' ? 'bg-green-100 border border-green-400 text-green-700' : 
+        'bg-red-100 border border-red-400 text-red-700'
+    }`;
+    div.textContent = message;
+    
+    document.body.appendChild(div);
+    
+    setTimeout(() => {
+        div.remove();
+    }, 3000);
+}
+</script>
+{% endblock %}
