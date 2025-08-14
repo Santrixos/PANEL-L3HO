@@ -1,0 +1,48 @@
+> Quiero que desarrolles una **API profesional de la Liga MX** en Python usando **Flask** que se integre directamente con mi **panel web PANEL-L3HO** (backend Flask + SQLite) sin necesidad de modificaciones posteriores.
+>
+> **Objetivos principales:**
+>
+> * La API debe conectarse al mismo sistema de usuarios del PANEL-L3HO, de forma que solo usuarios autenticados en el panel puedan usar la API (validación por API Key).
+> * Debe integrarse con la base de datos SQLite existente de mi panel, añadiendo las tablas necesarias para guardar toda la información de la Liga MX.
+> * Toda la información debe ser de **los 18 equipos de la Liga MX** y debe actualizarse de forma automática con los datos más recientes.
+> * La API debe usar **web scraping** (con `requests`, `BeautifulSoup` o `Playwright`) de las siguientes fuentes:
+>
+>   1. [https://ligamx.net](https://ligamx.net)
+>   2. [https://www.espn.com.mx/futbol/liga/\_/nombre/mex.1](https://www.espn.com.mx/futbol/liga/_/nombre/mex.1)
+>   3. [https://www.futboltotal.com.mx](https://www.futboltotal.com.mx)
+>   4. [https://www.mediotiempo.com/futbol/liga-mx](https://www.mediotiempo.com/futbol/liga-mx)
+>   5. [https://www.sofascore.com/es/torneo/futbol/mexico/liga-mx/123](https://www.sofascore.com/es/torneo/futbol/mexico/liga-mx/123)
+>   6. [https://www.flashscore.com.mx/futbol/mexico/liga-mx](https://www.flashscore.com.mx/futbol/mexico/liga-mx)
+>   7. [https://www.onefootball.com/es/competicion/liga-mx-1073](https://www.onefootball.com/es/competicion/liga-mx-1073)
+> * Debe almacenar los datos en tablas separadas para:
+>
+>   * Tabla de posiciones
+>   * Resultados en vivo
+>   * Calendario
+>   * Jugadores
+>   * Estadísticas de jugadores
+>   * Estadísticas de equipos
+>   * Goleadores
+>   * Asistencias
+>   * Logos/escudos
+>   * Noticias
+> * Todos los endpoints deben devolver **JSON** y permitir filtros (`?equipo=X`, `?jugador=Y`).
+> * Documentar todos los endpoints en `/api/info` y generar también documentación automática con Swagger UI.
+> * El código debe ser **100% compatible con mi PANEL-L3HO** y listo para ejecutar en **Termux** sin errores.
+> * Debe incluir un **script de actualización automática** que se ejecute cada cierto tiempo para refrescar los datos.
+>
+> **Ejemplo de endpoints esperados:**
+>
+> ```
+> /api/tabla
+> /api/calendario
+> /api/resultados
+> /api/jugadores?equipo=X
+> /api/logo?equipo=X
+> /api/estadisticas?jugador=Y
+> /api/goleadores
+> /api/asistencias
+> /api/historico?temporada=2023
+> /api/noticias?equipo=X
+> /api/info
+> ```

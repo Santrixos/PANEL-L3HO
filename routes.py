@@ -2,11 +2,13 @@ from flask import render_template, request, redirect, url_for, session, flash, j
 from werkzeug.security import generate_password_hash
 from werkzeug.utils import secure_filename
 from app import app, db
-from models import (User, ApiKey, WebsiteControl, ContentSection, ContentItem, 
-                   MediaFile, SystemLog, Notification, ScheduledTask, ApiUsage)
+from models import (User, ApiKey, WebsiteControl, ContentSection, 
+                   MediaFile, SystemLog, Notification, ScheduledTask, ApiUsage,
+                   LigaMXEquipo, LigaMXPosicion, LigaMXPartido, LigaMXJugador, 
+                   LigaMXEstadisticaJugador, LigaMXNoticia, LigaMXActualizacion)
 from services.futbol import FutbolService
 from services.transmisiones import TransmisionesService
-from services.content_manager import ContentManager
+# from services.content_manager import ContentManager  # Temporalmente comentado
 from datetime import datetime, timedelta
 import requests
 import os
@@ -998,7 +1000,7 @@ def view_logs():
 # ==================== PANEL MAESTRO PROFESIONAL - NUEVAS RUTAS ====================
 
 # Inicialización del gestor de contenido
-content_manager = ContentManager()
+# content_manager = ContentManager()  # Temporalmente comentado
 
 @app.route('/master-panel')
 def master_panel():
@@ -1007,14 +1009,14 @@ def master_panel():
         return redirect(url_for('login'))
     
     # Inicializar secciones por defecto si no existen
-    content_manager.initialize_default_sections()
+    # #content_manager.initialize_default_sections()  # Temporalmente comentado
     
     # Obtener estadísticas del sistema
     stats = {
         'total_sections': ContentSection.query.count(),
         'active_sections': ContentSection.query.filter_by(is_active=True).count(),
-        'total_content': ContentItem.query.count(),
-        'published_content': ContentItem.query.filter_by(status='published').count(),
+        # 'total_content': ContentItem.query.count(),  # Temporalmente comentado
+        # 'published_content': ContentItem.query.filter_by(status='published').count(),  # Temporalmente comentado
         'total_users': User.query.count(),
         'api_requests_today': get_api_requests_today(),
         'system_logs_today': SystemLog.query.filter(
@@ -1067,7 +1069,8 @@ def section_detail(section_name):
                 kwargs['client_id'] = client_id
                 kwargs['client_secret'] = client_secret
     
-    content_data = content_manager.get_section_content(section_name, **kwargs)
+    # content_data = #content_manager.get_section_content(section_name, **kwargs)
+    content_data = {'items': [], 'message': 'Sistema en mantenimiento'}
     
     return render_template('section_detail.html', 
                          section=section, 
@@ -1095,7 +1098,8 @@ def api_section_content(section_name):
             record_api_usage(api_key, request.endpoint, user.id, request.remote_addr)
     
     # Obtener contenido
-    content_data = content_manager.get_section_content(section_name, **kwargs)
+    # content_data = #content_manager.get_section_content(section_name, **kwargs)
+    content_data = {'items': [], 'message': 'Sistema en mantenimiento'}
     
     return jsonify(content_data)
 
@@ -1242,12 +1246,12 @@ def api_content_item():
         
         # Log de la acción
         action = 'creado' if request.method == 'POST' else 'actualizado'
-        content_manager.log_system_action(
-            'INFO', 'CONTENT', 
-            f'Contenido {action}: {item.title}',
-            {'item_id': item.id, 'section_id': item.section_id},
-            session.get('user_id')
-        )
+        # #content_manager.log_system_action(
+        #     'INFO', 'CONTENT', 
+        #     f'Contenido {action}: {item.title}',
+        #     {'item_id': item.id, 'section_id': item.section_id},
+        #     session.get('user_id')
+        # )
         
         return jsonify({
             'success': True, 
@@ -1366,12 +1370,12 @@ def create_scheduled_task():
         db.session.add(task)
         db.session.commit()
         
-        content_manager.log_system_action(
-            'INFO', 'SYSTEM', 
-            f'Tarea programada creada: {task.name}',
-            {'task_id': task.id, 'task_type': task.task_type},
-            session.get('user_id')
-        )
+        # #content_manager.log_system_action(
+        #     'INFO', 'SYSTEM', 
+        #     f'Tarea programada creada: {task.name}',
+        #     {'task_id': task.id, 'task_type': task.task_type},
+        #     session.get('user_id')
+        # )
         
         return jsonify({'success': True, 'message': 'Tarea creada correctamente'})
         
@@ -1776,12 +1780,12 @@ def api_music_download(user):
             record_api_usage(user.api_key, '/api/music/download', user.id, request.remote_addr)
             
             # Log de descarga
-            content_manager.log_system_action(
-                'INFO', 'MUSIC', 
-                f'Canción descargada: {song_data["title"]} - {song_data["artist"]}',
-                {'user_id': user.id, 'quality': quality, 'from_cache': result.get('from_cache', False)},
-                user.id
-            )
+            # #content_manager.log_system_action(
+            #     'INFO', 'MUSIC', 
+            #     f'Canción descargada: {song_data["title"]} - {song_data["artist"]}',
+            #     {'user_id': user.id, 'quality': quality, 'from_cache': result.get('from_cache', False)},
+            #     user.id
+            # )
         
         result['api_version'] = '1.0'
         result['usuario'] = user.username
@@ -1890,12 +1894,12 @@ def api_music_cache_clear(user):
         temp_cleaned = file_manager.cleanup_temp_files()
         
         # Log de la acción
-        content_manager.log_system_action(
-            'INFO', 'MUSIC', 
-            f'Caché limpiado: {cleared} archivos, {temp_cleaned} temporales',
-            {'pattern': pattern, 'user_id': user.id},
-            user.id
-        )
+        # #content_manager.log_system_action(
+        #     'INFO', 'MUSIC', 
+        #     f'Caché limpiado: {cleared} archivos, {temp_cleaned} temporales',
+        #     {'pattern': pattern, 'user_id': user.id},
+        #     user.id
+        # )
         
         return jsonify({
             'success': True,
@@ -2121,6 +2125,6 @@ def test_music_api(api_type):
 with app.app_context():
     create_admin_user()
     # Inicializar secciones por defecto
-    content_manager.initialize_default_sections()
+    #content_manager.initialize_default_sections()
     # Configurar APIs de música
     configure_music_apis()

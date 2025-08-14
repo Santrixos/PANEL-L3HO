@@ -35,5 +35,6 @@ with app.app_context():
 
 # Import routes
 from routes import *
+import routes_liga_mx
 
 

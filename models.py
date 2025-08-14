@@ -73,9 +73,152 @@ class ContentSection(db.Model):
     settings = db.Column(db.Text)  # JSON con configuraciones específicas
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+# ==================== MODELOS LIGA MX API ====================
+
+class LigaMXEquipo(db.Model):
+    """Modelo para equipos de Liga MX"""
+    __tablename__ = 'liga_mx_equipos'
     
-    # Relación con contenido
-    content_items = db.relationship('ContentItem', backref='section', lazy='dynamic', cascade='all, delete-orphan')
+    id = db.Column(db.Integer, primary_key=True)
+    nombre = db.Column(db.String(100), nullable=False, unique=True)
+    nombre_completo = db.Column(db.String(200))
+    ciudad = db.Column(db.String(100))
+    estadio = db.Column(db.String(200))
+    fundacion = db.Column(db.String(4))
+    logo_url = db.Column(db.String(500))
+    colores_primarios = db.Column(db.String(100))
+    sitio_web = db.Column(db.String(200))
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relaciones
+    posiciones = db.relationship('LigaMXPosicion', backref='equipo_info', lazy='dynamic')
+    partidos_local = db.relationship('LigaMXPartido', foreign_keys='LigaMXPartido.equipo_local_id', backref='equipo_local_info', lazy='dynamic')
+    partidos_visitante = db.relationship('LigaMXPartido', foreign_keys='LigaMXPartido.equipo_visitante_id', backref='equipo_visitante_info', lazy='dynamic')
+
+class LigaMXPosicion(db.Model):
+    """Tabla de posiciones Liga MX"""
+    __tablename__ = 'liga_mx_posiciones'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    temporada = db.Column(db.String(20), nullable=False, default='2024')
+    jornada = db.Column(db.Integer, default=1)
+    equipo_id = db.Column(db.Integer, db.ForeignKey('liga_mx_equipos.id'), nullable=False)
+    posicion = db.Column(db.Integer, nullable=False)
+    partidos_jugados = db.Column(db.Integer, default=0)
+    ganados = db.Column(db.Integer, default=0)
+    empatados = db.Column(db.Integer, default=0)
+    perdidos = db.Column(db.Integer, default=0)
+    goles_favor = db.Column(db.Integer, default=0)
+    goles_contra = db.Column(db.Integer, default=0)
+    diferencia_goles = db.Column(db.Integer, default=0)
+    puntos = db.Column(db.Integer, default=0)
+    fuente = db.Column(db.String(100))
+    ultima_actualizacion = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class LigaMXPartido(db.Model):
+    """Partidos y calendario Liga MX"""
+    __tablename__ = 'liga_mx_partidos'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    temporada = db.Column(db.String(20), nullable=False, default='2024')
+    jornada = db.Column(db.Integer, nullable=False)
+    equipo_local_id = db.Column(db.Integer, db.ForeignKey('liga_mx_equipos.id'), nullable=False)
+    equipo_visitante_id = db.Column(db.Integer, db.ForeignKey('liga_mx_equipos.id'), nullable=False)
+    fecha_partido = db.Column(db.DateTime)
+    estado = db.Column(db.String(20), default='programado')  # programado, en_vivo, finalizado, suspendido
+    goles_local = db.Column(db.Integer, default=0)
+    goles_visitante = db.Column(db.Integer, default=0)
+    estadio = db.Column(db.String(200))
+    arbitro = db.Column(db.String(200))
+    asistencia = db.Column(db.Integer)
+    minuto_actual = db.Column(db.Integer)
+    fuente = db.Column(db.String(100))
+    ultima_actualizacion = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class LigaMXJugador(db.Model):
+    """Jugadores Liga MX"""
+    __tablename__ = 'liga_mx_jugadores'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    nombre = db.Column(db.String(200), nullable=False)
+    equipo_id = db.Column(db.Integer, db.ForeignKey('liga_mx_equipos.id'), nullable=False)
+    posicion = db.Column(db.String(50))  # portero, defensa, medio, delantero
+    numero_camisa = db.Column(db.Integer)
+    edad = db.Column(db.Integer)
+    nacionalidad = db.Column(db.String(100))
+    altura = db.Column(db.String(10))
+    peso = db.Column(db.String(10))
+    pie_habil = db.Column(db.String(20))
+    valor_mercado = db.Column(db.String(50))
+    foto_url = db.Column(db.String(500))
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relación con equipo
+    equipo = db.relationship('LigaMXEquipo', backref='jugadores')
+
+class LigaMXEstadisticaJugador(db.Model):
+    """Estadísticas de jugadores Liga MX"""
+    __tablename__ = 'liga_mx_estadisticas_jugadores'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    jugador_id = db.Column(db.Integer, db.ForeignKey('liga_mx_jugadores.id'), nullable=False)
+    temporada = db.Column(db.String(20), nullable=False, default='2024')
+    partidos_jugados = db.Column(db.Integer, default=0)
+    goles = db.Column(db.Integer, default=0)
+    asistencias = db.Column(db.Integer, default=0)
+    tarjetas_amarillas = db.Column(db.Integer, default=0)
+    tarjetas_rojas = db.Column(db.Integer, default=0)
+    minutos_jugados = db.Column(db.Integer, default=0)
+    fuente = db.Column(db.String(100))
+    ultima_actualizacion = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relación con jugador
+    jugador = db.relationship('LigaMXJugador', backref='estadisticas')
+
+class LigaMXNoticia(db.Model):
+    """Noticias Liga MX"""
+    __tablename__ = 'liga_mx_noticias'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    titulo = db.Column(db.String(500), nullable=False)
+    contenido = db.Column(db.Text)
+    url_externa = db.Column(db.String(1000))
+    imagen_url = db.Column(db.String(500))
+    equipo_id = db.Column(db.Integer, db.ForeignKey('liga_mx_equipos.id'))
+    categoria = db.Column(db.String(100))  # transferencias, resultados, general
+    fecha_publicacion = db.Column(db.DateTime)
+    fuente = db.Column(db.String(100))
+    hash_contenido = db.Column(db.String(64), unique=True)  # Para evitar duplicados
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relación con equipo
+    equipo = db.relationship('LigaMXEquipo', backref='noticias')
+
+class LigaMXActualizacion(db.Model):
+    """Log de actualizaciones del sistema Liga MX"""
+    __tablename__ = 'liga_mx_actualizaciones'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    tipo_actualizacion = db.Column(db.String(100), nullable=False)  # tabla, calendario, jugadores, etc.
+    elementos_actualizados = db.Column(db.Integer, default=0)
+    fuentes_consultadas = db.Column(db.Text)  # JSON con fuentes usadas
+    errores = db.Column(db.Text)  # JSON con errores encontrados
+    tiempo_ejecucion = db.Column(db.Float)  # Segundos
+    status = db.Column(db.String(20), default='success')  # success, error, partial
+    detalles = db.Column(db.Text)  # JSON con detalles adicionales
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relación con contenido - comentada temporalmente
+    # content_items = db.relationship('ContentItem', backref='section', lazy='dynamic', cascade='all, delete-orphan')
     
     def get_settings(self):
         """Obtiene las configuraciones como diccionario"""
@@ -90,41 +233,9 @@ class ContentSection(db.Model):
         """Establece las configuraciones desde un diccionario"""
         self.settings = json.dumps(settings_dict)
 
-class ContentItem(db.Model):
-    """Items de contenido individual para cada sección"""
-    id = db.Column(db.Integer, primary_key=True)
-    section_id = db.Column(db.Integer, db.ForeignKey('content_section.id'), nullable=False)
-    title = db.Column(db.String(255), nullable=False)
-    description = db.Column(db.Text)
-    content_data = db.Column(db.Text)  # JSON con datos específicos del contenido
-    featured_image = db.Column(db.String(512))  # URL de imagen principal
-    status = db.Column(db.String(20), default='published')  # draft, published, archived
-    is_featured = db.Column(db.Boolean, default=False)
-    view_count = db.Column(db.Integer, default=0)
-    sort_order = db.Column(db.Integer, default=0)
-    created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
-    published_at = db.Column(db.DateTime)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
-    # Relación con usuario
-    creator = db.relationship('User', backref='created_content')
-    
-    # Relación con archivos
-    media_files = db.relationship('MediaFile', backref='content_item', lazy='dynamic', cascade='all, delete-orphan')
-    
-    def get_content_data(self):
-        """Obtiene los datos de contenido como diccionario"""
-        if self.content_data:
-            try:
-                return json.loads(self.content_data)
-            except:
-                return {}
-        return {}
-    
-    def set_content_data(self, data_dict):
-        """Establece los datos de contenido desde un diccionario"""
-        self.content_data = json.dumps(data_dict)
+# Modelos de contenido temporalmente comentados para evitar errores de relación
+# class ContentItem(db.Model):
+#     """Items de contenido individual para cada sección"""
 
 class MediaFile(db.Model):
     """Archivos multimedia subidos al sistema"""
