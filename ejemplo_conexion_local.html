@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liga MX API - Prueba Local</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .success { color: green; background: #d4edda; padding: 10px; border-radius: 5px; margin: 10px 0; }
+        .error { color: red; background: #f8d7da; padding: 10px; border-radius: 5px; margin: 10px 0; }
+        .info { background: #e9ecef; padding: 15px; border-radius: 5px; margin: 20px 0; font-family: monospace; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .goleador { margin: 10px 0; padding: 10px; background: #f8f9fa; border-left: 4px solid #007bff; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏆 Panel L3HO - Liga MX API</h1>
+        
+        <div class="info">
+            <strong>🔧 MODO DE PRUEBA LOCAL</strong><br>
+            Servidor Local: http://localhost:5000<br>
+            API Key: L3HO_LIGAMX_MASTER_KEY_2025_UNLIMITED<br>
+            Estado: <span id="connection-status">Verificando...</span>
+        </div>
+
+        <button onclick="probarConexion()">🔄 Probar Conexión</button>
+        <button onclick="cargarGoleadores()">⚽ Cargar Goleadores</button>
+        <button onclick="cargarNoticias()">📰 Cargar Noticias</button>
+        
+        <div id="resultados"></div>
+    </div>
+
+    <script>
+        const API_LOCAL = 'http://localhost:5000/api';
+        const API_KEY = 'L3HO_LIGAMX_MASTER_KEY_2025_UNLIMITED';
+
+        async function hacerRequest(endpoint) {
+            try {
+                console.log(`Conectando a: ${API_LOCAL}${endpoint}?api_key=${API_KEY}`);
+                const response = await fetch(`${API_LOCAL}${endpoint}?api_key=${API_KEY}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                return await response.json();
+            } catch (error) {
+                console.error('Error:', error);
+                throw error;
+            }
+        }
+
+        async function probarConexion() {
+            const statusEl = document.getElementById('connection-status');
+            const resultadosEl = document.getElementById('resultados');
+            
+            statusEl.textContent = 'Probando...';
+            resultadosEl.innerHTML = '<div>🔄 Probando conexión con el servidor...</div>';
+            
+            try {
+                const data = await hacerRequest('/public/liga-mx');
+                statusEl.innerHTML = '<span style="color: green;">✅ CONECTADO</span>';
+                resultadosEl.innerHTML = `
+                    <div class="success">
+                        ✅ Conexión exitosa con Panel L3HO<br>
+                        Liga: ${data.liga} ${data.temporada}<br>
+                        Equipos: ${data.meta.total_equipos}<br>
+                        Última actualización: ${data.meta.ultima_actualizacion}
+                    </div>
+                `;
+            } catch (error) {
+                statusEl.innerHTML = '<span style="color: red;">❌ ERROR</span>';
+                resultadosEl.innerHTML = `
+                    <div class="error">
+                        ❌ Error de conexión: ${error.message}<br>
+                        Verifica que el servidor Panel L3HO esté ejecutándose
+                    </div>
+                `;
+            }
+        }
+
+        async function cargarGoleadores() {
+            const resultadosEl = document.getElementById('resultados');
+            resultadosEl.innerHTML = '<div>🔄 Cargando goleadores...</div>';
+            
+            try {
+                const data = await hacerRequest('/goleadores');
+                
+                let html = `
+                    <div class="success">✅ Goleadores ${data.temporada} - Jornada ${data.jornada_actual}</div>
+                    <div class="goleador">
+                        <strong>🥇 Líder: ${data.lider.nombre} (${data.lider.equipo}) - ${data.lider.goles} goles</strong>
+                    </div>
+                `;
+                
+                data.goleadores.slice(0, 5).forEach((g, i) => {
+                    html += `
+                        <div class="goleador">
+                            ${i + 1}. ${g.nombre} (${g.equipo}) - ${g.goles} goles, ${g.asistencias} asistencias
+                        </div>
+                    `;
+                });
+                
+                resultadosEl.innerHTML = html;
+            } catch (error) {
+                resultadosEl.innerHTML = `<div class="error">❌ Error cargando goleadores: ${error.message}</div>`;
+            }
+        }
+
+        async function cargarNoticias() {
+            const resultadosEl = document.getElementById('resultados');
+            resultadosEl.innerHTML = '<div>🔄 Cargando noticias...</div>';
+            
+            try {
+                const data = await hacerRequest('/noticias');
+                
+                let html = `<div class="success">✅ ${data.total_noticias} noticias del ${data.temporada}</div>`;
+                
+                data.noticias.forEach(noticia => {
+                    html += `
+                        <div style="margin: 15px 0; padding: 15px; background: #f8f9fa; border-radius: 5px;">
+                            <h4 style="margin: 0 0 10px 0;">${noticia.titulo}</h4>
+                            <p>${noticia.resumen}</p>
+                            <small>📰 ${noticia.fuente} | ${noticia.fecha}</small>
+                        </div>
+                    `;
+                });
+                
+                resultadosEl.innerHTML = html;
+            } catch (error) {
+                resultadosEl.innerHTML = `<div class="error">❌ Error cargando noticias: ${error.message}</div>`;
+            }
+        }
+
+        // Probar conexión al cargar la página
+        window.addEventListener('load', () => {
+            console.log('🚀 Iniciando prueba de conexión local...');
+            probarConexion();
+        });
+    </script>
+</body>
+</html>
