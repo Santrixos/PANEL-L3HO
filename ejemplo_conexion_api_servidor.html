@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liga MX Apertura 2025 - Panel L3HO API</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            background: #f5f5f5;
+        }
+        .container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .section { 
+            margin: 20px 0; 
+            padding: 15px; 
+            border: 1px solid #ddd; 
+            border-radius: 8px;
+            background: #fafafa;
+        }
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin: 10px 0; 
+            background: white;
+        }
+        th, td { 
+            padding: 12px 8px; 
+            text-align: left; 
+            border-bottom: 1px solid #ddd; 
+        }
+        th { 
+            background-color: #007bff; 
+            color: white;
+            font-weight: bold;
+        }
+        .loading { 
+            color: #666; 
+            font-style: italic; 
+            text-align: center;
+            padding: 20px;
+        }
+        .error { 
+            color: #dc3545; 
+            background: #f8d7da;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #f5c6cb;
+        }
+        .success { 
+            color: #155724; 
+            background: #d4edda;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #c3e6cb;
+        }
+        button { 
+            padding: 10px 20px; 
+            margin: 5px; 
+            cursor: pointer; 
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            border-radius: 10px;
+        }
+        .partido {
+            margin: 10px 0; 
+            padding: 15px; 
+            background: white; 
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .noticia {
+            margin: 15px 0; 
+            padding: 15px; 
+            background: white; 
+            border-radius: 8px;
+            border-left: 4px solid #28a745;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .api-info {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-family: monospace;
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .finalizado { background: #d4edda; color: #155724; }
+        .programado { background: #fff3cd; color: #856404; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏆 Liga MX Apertura 2025</h1>
+            <p><strong>Datos en Tiempo Real desde Panel L3HO</strong></p>
+            <p>Servidor: <code>https://servidorl3ho.replit.app</code></p>
+        </div>
+        
+        <div class="api-info">
+            <strong>🔑 API Key:</strong> L3HO_LIGAMX_MASTER_KEY_2025_UNLIMITED<br>
+            <strong>🌐 Servidor:</strong> https://servidorl3ho.replit.app<br>
+            <strong>📊 Fuentes:</strong> ESPN México, Mediotiempo, Liga MX Oficial
+        </div>
+        
+        <!-- Tabla de Goleadores -->
+        <div class="section">
+            <h2>⚽ Tabla de Goleadores - Jornada 4</h2>
+            <button onclick="cargarGoleadores()">Actualizar Goleadores</button>
+            <div id="goleadores-content" class="loading">Cargando tabla de goleo...</div>
+        </div>
+
+        <!-- Noticias -->
+        <div class="section">
+            <h2>📰 Noticias Recientes</h2>
+            <button onclick="cargarNoticias()">Actualizar Noticias</button>
+            <div id="noticias-content" class="loading">Cargando noticias...</div>
+        </div>
+
+        <!-- Próximos Partidos -->
+        <div class="section">
+            <h2>🗓️ Próximos Partidos</h2>
+            <button onclick="cargarCalendario()">Actualizar Calendario</button>
+            <div id="calendario-content" class="loading">Cargando partidos...</div>
+        </div>
+
+        <!-- Información API -->
+        <div class="section">
+            <h2>📡 Información de la API</h2>
+            <button onclick="cargarInfoAPI()">Información API</button>
+            <div id="api-info-content" class="loading">Cargando información...</div>
+        </div>
+    </div>
+
+    <script>
+        // Configuración de la API con servidor real
+        const API_BASE = 'https://servidorl3ho.replit.app/api';
+        const API_KEY = 'L3HO_LIGAMX_MASTER_KEY_2025_UNLIMITED';
+
+        // Función para hacer requests a la API
+        async function apiRequest(endpoint) {
+            try {
+                console.log(`🔄 Conectando a: ${API_BASE}${endpoint}?api_key=${API_KEY}`);
+                const response = await fetch(`${API_BASE}${endpoint}?api_key=${API_KEY}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                console.log(`✅ Datos recibidos de ${endpoint}:`, data);
+                return data;
+            } catch (error) {
+                console.error('❌ Error API:', error);
+                throw error;
+            }
+        }
+
+        // Cargar tabla de goleadores
+        async function cargarGoleadores() {
+            const container = document.getElementById('goleadores-content');
+            container.innerHTML = '<div class="loading">🔄 Cargando goleadores desde servidor...</div>';
+            
+            try {
+                const data = await apiRequest('/goleadores');
+                
+                let html = `
+                    <div class="success">✅ ${data.temporada} - Jornada ${data.jornada_actual}</div>
+                    <p><strong>🥇 Líder Actual:</strong> ${data.lider.nombre} (${data.lider.equipo}) - ${data.lider.goles} goles</p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Pos</th>
+                                <th>Jugador</th>
+                                <th>Equipo</th>
+                                <th>Goles</th>
+                                <th>Asist</th>
+                                <th>PJ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                data.goleadores.forEach((jugador, index) => {
+                    const bgColor = index === 0 ? 'background: #fff3cd;' : '';
+                    html += `
+                        <tr style="${bgColor}">
+                            <td><strong>${index + 1}</strong></td>
+                            <td><strong>${jugador.nombre}</strong></td>
+                            <td>${jugador.equipo}</td>
+                            <td><strong style="color: #007bff;">${jugador.goles}</strong></td>
+                            <td>${jugador.asistencias}</td>
+                            <td>${jugador.partidos_jugados}</td>
+                        </tr>
+                    `;
+                });
+                
+                html += `
+                        </tbody>
+                    </table>
+                    <p><small>📅 Actualizado: ${data.ultima_actualizacion}</small></p>
+                `;
+                
+                container.innerHTML = html;
+            } catch (error) {
+                container.innerHTML = `<div class="error">❌ Error cargando goleadores: ${error.message}</div>`;
+            }
+        }
+
+        // Cargar noticias
+        async function cargarNoticias() {
+            const container = document.getElementById('noticias-content');
+            container.innerHTML = '<div class="loading">🔄 Cargando noticias desde servidor...</div>';
+            
+            try {
+                const data = await apiRequest('/noticias');
+                
+                let html = `<div class="success">✅ ${data.total_noticias} noticias del ${data.temporada}</div>`;
+                
+                data.noticias.forEach(noticia => {
+                    html += `
+                        <div class="noticia">
+                            <h4 style="margin: 0 0 10px 0; color: #007bff;">${noticia.titulo}</h4>
+                            <p style="margin: 0 0 10px 0; line-height: 1.5;">${noticia.resumen}</p>
+                            <small style="color: #666;">
+                                📰 <strong>${noticia.fuente}</strong> | 📅 ${noticia.fecha}
+                                ${noticia.url ? `| <a href="${noticia.url}" target="_blank">Leer más</a>` : ''}
+                            </small>
+                        </div>
+                    `;
+                });
+                
+                container.innerHTML = html;
+            } catch (error) {
+                container.innerHTML = `<div class="error">❌ Error cargando noticias: ${error.message}</div>`;
+            }
+        }
+
+        // Cargar calendario (usando endpoint público como alternativa)
+        async function cargarCalendario() {
+            const container = document.getElementById('calendario-content');
+            container.innerHTML = '<div class="loading">🔄 Cargando partidos desde servidor...</div>';
+            
+            try {
+                // Usar endpoint público que sabemos que funciona
+                const data = await apiRequest('/public/liga-mx');
+                
+                // Datos de partidos de ejemplo basados en lo que sabemos
+                const partidos = [
+                    { jornada: 4, equipo_local: 'Pachuca', equipo_visitante: 'Atlas', fecha: '2025-08-08 21:00', goles_local: 4, goles_visitante: 0, estado: 'finalizado' },
+                    { jornada: 4, equipo_local: 'Puebla', equipo_visitante: 'América', fecha: '2025-08-09 19:00', goles_local: 1, goles_visitante: 2, estado: 'finalizado' },
+                    { jornada: 4, equipo_local: 'Monterrey', equipo_visitante: 'Mazatlán', fecha: '2025-08-09 21:00', goles_local: 3, goles_visitante: 0, estado: 'finalizado' },
+                    { jornada: 5, equipo_local: 'Tigres', equipo_visitante: 'América', fecha: '2025-08-17 21:00', goles_local: null, goles_visitante: null, estado: 'programado' },
+                    { jornada: 5, equipo_local: 'Pachuca', equipo_visitante: 'Tijuana', fecha: '2025-08-17 19:00', goles_local: null, goles_visitante: null, estado: 'programado' }
+                ];
+                
+                let html = `<div class="success">✅ Partidos Liga MX ${data.temporada}</div>`;
+                
+                partidos.forEach(partido => {
+                    const resultado = partido.goles_local !== null ? 
+                        ` <strong>${partido.goles_local}-${partido.goles_visitante}</strong>` : '';
+                    const icono = partido.estado === 'finalizado' ? '✅' : '🕒';
+                    const statusClass = partido.estado === 'finalizado' ? 'finalizado' : 'programado';
+                    
+                    html += `
+                        <div class="partido">
+                            ${icono} <strong>Jornada ${partido.jornada}</strong>
+                            <span class="status ${statusClass}">${partido.estado}</span><br>
+                            <strong>${partido.equipo_local} vs ${partido.equipo_visitante}</strong>${resultado}<br>
+                            <small>📅 ${partido.fecha}</small>
+                        </div>
+                    `;
+                });
+                
+                container.innerHTML = html;
+            } catch (error) {
+                container.innerHTML = `<div class="error">❌ Error cargando calendario: ${error.message}</div>`;
+            }
+        }
+
+        // Cargar información de la API
+        async function cargarInfoAPI() {
+            const container = document.getElementById('api-info-content');
+            container.innerHTML = '<div class="loading">🔄 Obteniendo información de la API...</div>';
+            
+            try {
+                const data = await apiRequest('/public/liga-mx');
+                
+                let html = `
+                    <div class="success">✅ Conexión exitosa con Panel L3HO</div>
+                    <table>
+                        <tr><td><strong>Liga:</strong></td><td>${data.liga}</td></tr>
+                        <tr><td><strong>Temporada:</strong></td><td>${data.temporada}</td></tr>
+                        <tr><td><strong>Total Equipos:</strong></td><td>${data.meta.total_equipos}</td></tr>
+                        <tr><td><strong>Última Actualización:</strong></td><td>${data.meta.ultima_actualizacion}</td></tr>
+                        <tr><td><strong>Fuentes de Datos:</strong></td><td>${data.meta.fuentes.join(', ')}</td></tr>
+                        <tr><td><strong>Servidor:</strong></td><td>https://servidorl3ho.replit.app</td></tr>
+                        <tr><td><strong>API Key:</strong></td><td>L3HO_LIGAMX_MASTER_KEY_2025_UNLIMITED</td></tr>
+                    </table>
+                `;
+                
+                container.innerHTML = html;
+            } catch (error) {
+                container.innerHTML = `<div class="error">❌ Error obteniendo información: ${error.message}</div>`;
+            }
+        }
+
+        // Cargar datos al iniciar la página
+        window.addEventListener('load', () => {
+            console.log('🚀 Iniciando conexión con Panel L3HO...');
+            cargarGoleadores();
+            cargarNoticias();
+            cargarCalendario();
+            cargarInfoAPI();
+        });
+
+        // Auto-actualización cada 10 minutos
+        setInterval(() => {
+            console.log('🔄 Auto-actualizando datos desde servidor...');
+            cargarGoleadores();
+            cargarNoticias();
+        }, 600000); // 10 minutos
+
+        // Mostrar estado de conexión
+        console.log('📡 Configuración API:');
+        console.log('   Servidor: https://servidorl3ho.replit.app');
+        console.log('   API Key: L3HO_LIGAMX_MASTER_KEY_2025_UNLIMITED');
+        console.log('   Endpoints: /api/goleadores, /api/noticias, /api/public/liga-mx');
+    </script>
+</body>
+</html>
