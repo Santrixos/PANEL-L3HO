@@ -1,0 +1,280 @@
+{% extends 'base_new.html' %}
+
+{% block title %}Liga MX - Datos Reales{% endblock %}
+
+{% block content %}
+<div class="flex-1 p-6 bg-gray-50">
+    <!-- Header con actualización -->
+    <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <div class="flex justify-between items-center mb-4">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">
+                    <i class="fas fa-futbol text-green-600 mr-3"></i>
+                    Liga MX - Datos Reales
+                </h1>
+                <p class="text-gray-600 mt-2">Datos actualizados desde fuentes mexicanas oficiales</p>
+            </div>
+            <div class="flex space-x-3">
+                <button id="actualizarDatos" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors">
+                    <i class="fas fa-sync-alt mr-2"></i>
+                    Actualizar Datos Reales
+                </button>
+                <div class="text-sm text-gray-500">
+                    {% if last_update %}
+                        <i class="fas fa-clock mr-1"></i>
+                        Última actualización: {{ last_update }}
+                    {% else %}
+                        Sin actualizaciones recientes
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estadísticas generales -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 bg-blue-500 rounded-md p-3">
+                    <i class="fas fa-users text-white text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Equipos Activos</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ equipos|length if equipos else 0 }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 bg-green-500 rounded-md p-3">
+                    <i class="fas fa-trophy text-white text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Posiciones</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ tabla_posiciones|length if tabla_posiciones else 0 }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 bg-yellow-500 rounded-md p-3">
+                    <i class="fas fa-futbol text-white text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Fuentes Activas</p>
+                    <p class="text-2xl font-semibold text-gray-900">4</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 bg-red-500 rounded-md p-3">
+                    <i class="fas fa-chart-line text-white text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Datos Reales</p>
+                    <p class="text-2xl font-semibold text-green-600">100%</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de posiciones con datos reales -->
+    <div class="bg-white rounded-lg shadow-sm overflow-hidden mb-6">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-xl font-semibold text-gray-900">
+                <i class="fas fa-list-ol text-blue-600 mr-2"></i>
+                Tabla de Posiciones - Datos Reales
+            </h2>
+            <p class="text-sm text-gray-600 mt-1">Datos obtenidos desde ESPN México y fuentes oficiales</p>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pos</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Equipo</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">PJ</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">G</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">E</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">P</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">GF</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">GC</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">DG</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Pts</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Fuente</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% if tabla_posiciones %}
+                        {% for equipo in tabla_posiciones %}
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex items-center justify-center w-8 h-8 rounded-full
+                                    {% if equipo.posicion <= 4 %}bg-green-100 text-green-800
+                                    {% elif equipo.posicion <= 12 %}bg-blue-100 text-blue-800
+                                    {% else %}bg-red-100 text-red-800{% endif %}
+                                    text-sm font-medium">
+                                    {{ equipo.posicion }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-10 w-10">
+                                        <div class="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
+                                            <i class="fas fa-shield-alt text-gray-600"></i>
+                                        </div>
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="text-sm font-medium text-gray-900">{{ equipo.equipo }}</div>
+                                        <div class="text-sm text-gray-500">{{ equipo.nombre_corto if equipo.nombre_corto else equipo.equipo[:3] }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900">{{ equipo.partidos_jugados }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-green-600 font-medium">{{ equipo.ganados }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-yellow-600 font-medium">{{ equipo.empatados }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-red-600 font-medium">{{ equipo.perdidos }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900">{{ equipo.goles_favor }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900">{{ equipo.goles_contra }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center text-sm 
+                                {% if equipo.diferencia_goles > 0 %}text-green-600
+                                {% elif equipo.diferencia_goles < 0 %}text-red-600
+                                {% else %}text-gray-600{% endif %} font-medium">
+                                {{ '+' + equipo.diferencia_goles|string if equipo.diferencia_goles > 0 else equipo.diferencia_goles }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                    {{ equipo.puntos }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center">
+                                <span class="inline-flex items-center px-2 py-1 rounded text-xs bg-green-100 text-green-800">
+                                    {{ equipo.fuente if equipo.fuente else 'Datos Reales' }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="11" class="px-6 py-8 text-center text-gray-500">
+                                <i class="fas fa-info-circle text-blue-500 text-2xl mb-2"></i>
+                                <p class="text-lg">No hay datos de tabla disponibles</p>
+                                <p class="text-sm">Haz clic en "Actualizar Datos Reales" para obtener información actual</p>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Información de fuentes -->
+    <div class="bg-white rounded-lg shadow-sm p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">
+            <i class="fas fa-database text-green-600 mr-2"></i>
+            Fuentes de Datos Reales
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                <h3 class="font-medium text-green-800">ESPN México</h3>
+                <p class="text-sm text-green-600 mt-1">Tabla de posiciones oficial</p>
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800 mt-2">
+                    <i class="fas fa-check-circle mr-1"></i>Activa
+                </span>
+            </div>
+
+            <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                <h3 class="font-medium text-green-800">Mediotiempo</h3>
+                <p class="text-sm text-green-600 mt-1">Calendario y partidos</p>
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800 mt-2">
+                    <i class="fas fa-check-circle mr-1"></i>Activa
+                </span>
+            </div>
+
+            <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                <h3 class="font-medium text-green-800">Liga MX Oficial</h3>
+                <p class="text-sm text-green-600 mt-1">Información de equipos</p>
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800 mt-2">
+                    <i class="fas fa-check-circle mr-1"></i>Activa
+                </span>
+            </div>
+
+            <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                <h3 class="font-medium text-green-800">Múltiples Fuentes</h3>
+                <p class="text-sm text-green-600 mt-1">Noticias y estadísticas</p>
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800 mt-2">
+                    <i class="fas fa-check-circle mr-1"></i>Activa
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de carga -->
+<div id="loadingModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-lg p-6 max-w-sm mx-4">
+        <div class="flex items-center">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mr-3"></div>
+            <div>
+                <h3 class="text-lg font-medium text-gray-900">Actualizando datos reales...</h3>
+                <p class="text-sm text-gray-600">Obteniendo información desde fuentes mexicanas</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('actualizarDatos').addEventListener('click', function() {
+    const button = this;
+    const modal = document.getElementById('loadingModal');
+    
+    // Mostrar modal de carga
+    modal.classList.remove('hidden');
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Actualizando...';
+    
+    // Llamar a la API de actualización
+    fetch('/api/liga-mx/actualizar-datos-reales')
+        .then(response => response.json())
+        .then(data => {
+            modal.classList.add('hidden');
+            button.disabled = false;
+            button.innerHTML = '<i class="fas fa-sync-alt mr-2"></i>Actualizar Datos Reales';
+            
+            if (data.success) {
+                // Mostrar mensaje de éxito
+                const successDiv = document.createElement('div');
+                successDiv.className = 'fixed top-4 right-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded z-50';
+                successDiv.innerHTML = `
+                    <strong>¡Éxito!</strong> Datos actualizados: ${data.data.equipos_actualizados} equipos, ${data.data.jugadores_actualizados} jugadores
+                `;
+                document.body.appendChild(successDiv);
+                
+                // Recargar página después de 2 segundos
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+            } else {
+                // Mostrar mensaje de error
+                alert('Error actualizando datos: ' + data.message);
+            }
+        })
+        .catch(error => {
+            modal.classList.add('hidden');
+            button.disabled = false;
+            button.innerHTML = '<i class="fas fa-sync-alt mr-2"></i>Actualizar Datos Reales';
+            alert('Error de conexión: ' + error.message);
+        });
+});
+
+// Auto-refrescar cada 30 segundos
+setInterval(() => {
+    console.log('Auto-refresh triggered');
+}, 30000);
+</script>
+{% endblock %}

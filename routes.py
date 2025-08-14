@@ -2120,57 +2120,131 @@ def test_music_api(api_type):
 
 @app.route('/modules/football')
 def football_module():
-    """Módulo mejorado de Liga MX con diseño profesional"""
+    """Módulo mejorado de Liga MX con datos reales desde fuentes mexicanas"""
     if 'user_id' not in session:
         return redirect(url_for('login'))
     
-    # Obtener equipos de la base de datos
-    equipos = LigaMXEquipo.query.all()
-    
-    last_update = None
-    if equipos:
-        # Obtener la fecha de actualización más reciente
-        dates = [e.updated_at for e in equipos if e.updated_at]
-        if dates:
-            last_update = max(dates).isoformat()
-    
-    return render_template('modules/football_new.html', 
-                         equipos=equipos, 
-                         last_update=last_update)
+    try:
+        # Actualizar datos reales automáticamente
+        from services.liga_mx_data_manager import LigaMXDataManager
+        data_manager = LigaMXDataManager()
+        
+        # Obtener tabla actualizada con datos reales
+        tabla_actualizada = data_manager.get_tabla_actualizada()
+        
+        # Si no hay datos, actualizar desde fuentes reales
+        if not tabla_actualizada:
+            logger.info("No hay datos en BD, actualizando desde fuentes reales...")
+            update_result = data_manager.update_all_data()
+            tabla_actualizada = data_manager.get_tabla_actualizada()
+        
+        # Obtener equipos de BD
+        equipos = LigaMXEquipo.query.all()
+        
+        # Obtener última actualización
+        last_update = None
+        last_actualizacion = LigaMXActualizacion.query.filter_by(status='success').order_by(LigaMXActualizacion.created_at.desc()).first()
+        if last_actualizacion:
+            last_update = last_actualizacion.created_at.isoformat()
+        
+        return render_template('liga_mx_datos_reales.html', 
+                             equipos=equipos,
+                             tabla_posiciones=tabla_actualizada,
+                             last_update=last_update)
+                             
+    except Exception as e:
+        logger.error(f"Error en football_module: {e}")
+        # Fallback a datos básicos
+        equipos = LigaMXEquipo.query.all()
+        return render_template('liga_mx_datos_reales.html', 
+                             equipos=equipos, 
+                             tabla_posiciones=[],
+                             last_update=None)
+
+@app.route('/api/liga-mx/actualizar-datos-reales')
+def api_actualizar_datos_reales():
+    """API para forzar actualización con datos reales desde fuentes mexicanas"""
+    try:
+        from services.liga_mx_data_manager import LigaMXDataManager
+        data_manager = LigaMXDataManager()
+        
+        # Forzar actualización desde fuentes reales
+        result = data_manager.update_all_data()
+        
+        if 'error' in result:
+            return jsonify({
+                'success': False,
+                'error': result['error'],
+                'message': 'Error actualizando datos reales'
+            })
+        
+        return jsonify({
+            'success': True,
+            'data': result,
+            'message': 'Datos reales actualizados correctamente',
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"Error en API actualizar datos reales: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'message': 'Error interno'
+        })
 
 @app.route('/api/liga-mx/data-completa')
 def api_liga_mx_data_completa():
-    """API para obtener todos los datos de Liga MX con scraping en tiempo real"""
+    """API para obtener todos los datos de Liga MX desde base de datos (datos reales)"""
     try:
-        # Importar el scraper mejorado
-        from services.liga_mx_scraper import liga_mx_scraper
+        from services.liga_mx_data_manager import LigaMXDataManager
+        data_manager = LigaMXDataManager()
         
-        # Obtener datos completos con scraping
-        data = liga_mx_scraper.get_comprehensive_data()
+        # Obtener tabla actualizada
+        tabla_datos = data_manager.get_tabla_actualizada()
         
-        # Si no hay datos de scraping, usar datos de la base de datos
-        if not data.get('tabla'):
-            equipos = LigaMXEquipo.query.order_by(LigaMXEquipo.id).all()
-            data['tabla'] = []
-            
-            for i, equipo in enumerate(equipos, 1):
-                data['tabla'].append({
-                    'posicion': i,
-                    'equipo': equipo.nombre,
-                    'partidos_jugados': 15 + (i % 3),
-                    'puntos': max(15, 45 - (i * 2) + (i % 3)),
-                    'ganados': 0,
-                    'empatados': 0,
-                    'perdidos': 0,
-                    'goles_favor': 0,
-                    'goles_contra': 0,
-                    'fuente': 'Base de datos'
-                })
+        # Obtener partidos recientes
+        partidos = LigaMXPartido.query.filter_by(temporada='2024').order_by(LigaMXPartido.fecha_partido.desc()).limit(10).all()
+        
+        # Obtener noticias recientes
+        noticias = LigaMXNoticia.query.filter_by(is_active=True).order_by(LigaMXNoticia.created_at.desc()).limit(5).all()
+        
+        # Obtener equipos
+        equipos = LigaMXEquipo.query.filter_by(is_active=True).all()
+        
+        data = {
+            'tabla': tabla_datos,
+            'partidos': [{
+                'id': p.id,
+                'jornada': p.jornada,
+                'equipo_local': p.equipo_local_info.nombre if p.equipo_local_info else 'N/A',
+                'equipo_visitante': p.equipo_visitante_info.nombre if p.equipo_visitante_info else 'N/A',
+                'goles_local': p.goles_local,
+                'goles_visitante': p.goles_visitante,
+                'fecha': p.fecha_partido.isoformat() if p.fecha_partido else None,
+                'estado': p.estado
+            } for p in partidos],
+            'noticias': [{
+                'id': n.id,
+                'titulo': n.titulo,
+                'resumen': n.resumen,
+                'fuente': n.fuente,
+                'fecha': n.fecha.isoformat() if n.fecha else None,
+                'url': n.url
+            } for n in noticias],
+            'equipos': [{
+                'id': e.id,
+                'nombre': e.nombre,
+                'ciudad': e.ciudad,
+                'estadio': e.estadio,
+                'logo_url': e.logo_url
+            } for e in equipos]
+        }
         
         return jsonify({
             'success': True,
             'data': data,
-            'message': 'Datos obtenidos correctamente',
+            'message': 'Datos obtenidos desde base de datos (fuentes reales)',
             'timestamp': datetime.now().isoformat()
         })
         

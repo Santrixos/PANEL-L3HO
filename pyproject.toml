@@ -16,6 +16,7 @@ dependencies = [
     "psycopg2-binary>=2.9.10",
     "pydub>=0.25.1",
     "requests>=2.32.4",
+    "schedule>=1.2.2",
     "spotipy>=2.25.1",
     "sqlalchemy>=2.0.42",
     "trafilatura>=2.0.0",

@@ -189,12 +189,12 @@ class LigaMXNoticia(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     titulo = db.Column(db.String(500), nullable=False)
-    contenido = db.Column(db.Text)
-    url_externa = db.Column(db.String(1000))
+    resumen = db.Column(db.Text)  # Cambio de contenido a resumen
+    url = db.Column(db.String(1000))  # Cambio de url_externa a url
     imagen_url = db.Column(db.String(500))
     equipo_id = db.Column(db.Integer, db.ForeignKey('liga_mx_equipos.id'))
     categoria = db.Column(db.String(100))  # transferencias, resultados, general
-    fecha_publicacion = db.Column(db.DateTime)
+    fecha = db.Column(db.DateTime, default=datetime.utcnow)  # Cambio de fecha_publicacion a fecha
     fuente = db.Column(db.String(100))
     hash_contenido = db.Column(db.String(64), unique=True)  # Para evitar duplicados
     is_active = db.Column(db.Boolean, default=True)
