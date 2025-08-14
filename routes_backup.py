@@ -2470,3 +2470,446 @@ with app.app_context():
     #content_manager.initialize_default_sections()
     # Configurar APIs de música
     configure_music_apis()
+        
+        # Filtro por equipo si se especifica
+        equipo_filter = request.args.get('equipo')
+        if equipo_filter:
+            equipos = [e for e in equipos if equipo_filter.lower() in e.nombre.lower()]
+        
+        # Límite de resultados
+        limit = request.args.get('limit', type=int)
+        if limit:
+            equipos = equipos[:limit]
+        
+        result = []
+        for equipo in equipos:
+            result.append({
+                'id': equipo.id,
+                'nombre': equipo.nombre,
+                'nombre_corto': equipo.nombre_corto or equipo.nombre,
+                'ciudad': equipo.ciudad or 'No especificada',
+                'estadio': equipo.estadio or 'No especificado',
+                'fundado': equipo.fundado,
+                'escudo_url': f'/static/logos/{equipo.nombre.lower().replace(" ", "_")}.png',
+                'posicion': equipo.posicion,
+                'puntos': equipo.puntos,
+                'partidos_jugados': equipo.partidos_jugados,
+                'ganados': equipo.ganados,
+                'empatados': equipo.empatados,
+                'perdidos': equipo.perdidos,
+                'goles_favor': equipo.goles_favor,
+                'goles_contra': equipo.goles_contra,
+                'diferencia_goles': (equipo.goles_favor or 0) - (equipo.goles_contra or 0),
+                'updated_at': equipo.updated_at.isoformat() if equipo.updated_at else None
+            })
+        
+        return jsonify({
+            'success': True,
+            'data': result,
+            'total': len(result),
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"Error en API equipos: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Error interno del servidor'
+        }), 500
+
+@app.route('/api/ligamx/equipos/<int:equipo_id>', methods=['GET'])
+@require_api_key
+def api_equipo_detalle(equipo_id):
+    """Endpoint para obtener detalles de un equipo específico"""
+    try:
+        equipo = LigaMXEquipo.query.get_or_404(equipo_id)
+        
+        # Obtener estadísticas adicionales del equipo
+        jugadores = LigaMXJugador.query.filter_by(equipo_id=equipo.id).all()
+        partidos_casa = LigaMXPartido.query.filter_by(equipo_local_id=equipo.id).all()
+        partidos_visitante = LigaMXPartido.query.filter_by(equipo_visitante_id=equipo.id).all()
+        
+        result = {
+            'id': equipo.id,
+            'nombre': equipo.nombre,
+            'nombre_corto': equipo.nombre_corto or equipo.nombre,
+            'ciudad': equipo.ciudad or 'No especificada',
+            'estadio': equipo.estadio or 'No especificado',
+            'fundado': equipo.fundado,
+            'escudo_url': f'/static/logos/{equipo.nombre.lower().replace(" ", "_")}.png',
+            'posicion': equipo.posicion,
+            'puntos': equipo.puntos,
+            'estadisticas': {
+                'partidos_jugados': equipo.partidos_jugados,
+                'ganados': equipo.ganados,
+                'empatados': equipo.empatados,
+                'perdidos': equipo.perdidos,
+                'goles_favor': equipo.goles_favor,
+                'goles_contra': equipo.goles_contra,
+                'diferencia_goles': (equipo.goles_favor or 0) - (equipo.goles_contra or 0)
+            },
+            'jugadores_count': len(jugadores),
+            'partidos_casa_count': len(partidos_casa),
+            'partidos_visitante_count': len(partidos_visitante),
+            'updated_at': equipo.updated_at.isoformat() if equipo.updated_at else None
+        }
+        
+        return jsonify({
+            'success': True,
+            'data': result,
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"Error en API equipo detalle: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Equipo no encontrado'
+        }), 404
+
+@app.route('/api/ligamx/tabla', methods=['GET'])
+@require_api_key
+def api_tabla_posiciones():
+    """Endpoint para obtener la tabla de posiciones"""
+    try:
+        equipos = LigaMXEquipo.query.order_by(
+            LigaMXEquipo.puntos.desc(),
+            (LigaMXEquipo.goles_favor - LigaMXEquipo.goles_contra).desc(),
+            LigaMXEquipo.goles_favor.desc()
+        ).all()
+        
+        result = []
+        for i, equipo in enumerate(equipos, 1):
+            # Actualizar posición
+            equipo.posicion = i
+            
+            result.append({
+                'posicion': i,
+                'equipo': equipo.nombre,
+                'partidos_jugados': equipo.partidos_jugados or 0,
+                'ganados': equipo.ganados or 0,
+                'empatados': equipo.empatados or 0,
+                'perdidos': equipo.perdidos or 0,
+                'goles_favor': equipo.goles_favor or 0,
+                'goles_contra': equipo.goles_contra or 0,
+                'diferencia_goles': (equipo.goles_favor or 0) - (equipo.goles_contra or 0),
+                'puntos': equipo.puntos or 0,
+                'escudo_url': f'/static/logos/{equipo.nombre.lower().replace(" ", "_")}.png'
+            })
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'data': result,
+            'total_equipos': len(result),
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"Error en API tabla: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Error interno del servidor'
+        }), 500
+
+@app.route('/api/ligamx/partidos', methods=['GET'])
+@require_api_key
+def api_partidos():
+    """Endpoint para obtener partidos"""
+    try:
+        partidos = LigaMXPartido.query.order_by(LigaMXPartido.fecha.desc()).all()
+        
+        # Filtros
+        fecha_filter = request.args.get('fecha')
+        if fecha_filter:
+            try:
+                fecha_obj = datetime.strptime(fecha_filter, '%Y-%m-%d').date()
+                partidos = [p for p in partidos if p.fecha and p.fecha.date() == fecha_obj]
+            except ValueError:
+                pass
+        
+        limit = request.args.get('limit', type=int)
+        if limit:
+            partidos = partidos[:limit]
+        
+        result = []
+        for partido in partidos:
+            result.append({
+                'id': partido.id,
+                'fecha': partido.fecha.isoformat() if partido.fecha else None,
+                'jornada': partido.jornada,
+                'equipo_local': partido.equipo_local.nombre if partido.equipo_local else 'TBD',
+                'equipo_visitante': partido.equipo_visitante.nombre if partido.equipo_visitante else 'TBD',
+                'goles_local': partido.goles_local,
+                'goles_visitante': partido.goles_visitante,
+                'estado': partido.estado or 'programado',
+                'estadio': partido.estadio,
+                'updated_at': partido.updated_at.isoformat() if partido.updated_at else None
+            })
+        
+        return jsonify({
+            'success': True,
+            'data': result,
+            'total': len(result),
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"Error en API partidos: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Error interno del servidor'
+        }), 500
+
+@app.route('/api/ligamx/partidos/proximos', methods=['GET'])
+@require_api_key
+def api_partidos_proximos():
+    """Endpoint para próximos partidos"""
+    try:
+        hoy = datetime.now().date()
+        partidos = LigaMXPartido.query.filter(
+            LigaMXPartido.fecha >= hoy,
+            LigaMXPartido.estado.in_(['programado', 'próximo'])
+        ).order_by(LigaMXPartido.fecha.asc()).all()
+        
+        limit = request.args.get('limit', 10, type=int)
+        partidos = partidos[:limit]
+        
+        result = []
+        for partido in partidos:
+            result.append({
+                'id': partido.id,
+                'fecha': partido.fecha.isoformat() if partido.fecha else None,
+                'jornada': partido.jornada,
+                'equipo_local': partido.equipo_local.nombre if partido.equipo_local else 'TBD',
+                'equipo_visitante': partido.equipo_visitante.nombre if partido.equipo_visitante else 'TBD',
+                'estadio': partido.estadio,
+                'estado': partido.estado or 'programado'
+            })
+        
+        return jsonify({
+            'success': True,
+            'data': result,
+            'total': len(result),
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"Error en API próximos partidos: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Error interno del servidor'
+        }), 500
+
+@app.route('/api/ligamx/partidos/resultados', methods=['GET'])
+@require_api_key
+def api_partidos_resultados():
+    """Endpoint para resultados de partidos"""
+    try:
+        partidos = LigaMXPartido.query.filter(
+            LigaMXPartido.estado.in_(['finalizado', 'terminado']),
+            LigaMXPartido.goles_local.isnot(None),
+            LigaMXPartido.goles_visitante.isnot(None)
+        ).order_by(LigaMXPartido.fecha.desc()).all()
+        
+        limit = request.args.get('limit', 20, type=int)
+        partidos = partidos[:limit]
+        
+        result = []
+        for partido in partidos:
+            result.append({
+                'id': partido.id,
+                'fecha': partido.fecha.isoformat() if partido.fecha else None,
+                'jornada': partido.jornada,
+                'equipo_local': partido.equipo_local.nombre if partido.equipo_local else 'TBD',
+                'equipo_visitante': partido.equipo_visitante.nombre if partido.equipo_visitante else 'TBD',
+                'goles_local': partido.goles_local,
+                'goles_visitante': partido.goles_visitante,
+                'resultado': f"{partido.goles_local}-{partido.goles_visitante}",
+                'estadio': partido.estadio
+            })
+        
+        return jsonify({
+            'success': True,
+            'data': result,
+            'total': len(result),
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"Error en API resultados: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Error interno del servidor'
+        }), 500
+
+@app.route('/api/ligamx/jugadores', methods=['GET'])
+@require_api_key
+def api_jugadores():
+    """Endpoint para obtener jugadores"""
+    try:
+        jugadores = LigaMXJugador.query.all()
+        
+        # Filtros
+        jugador_filter = request.args.get('jugador')
+        if jugador_filter:
+            jugadores = [j for j in jugadores if jugador_filter.lower() in j.nombre.lower()]
+        
+        equipo_filter = request.args.get('equipo')
+        if equipo_filter:
+            jugadores = [j for j in jugadores if j.equipo and equipo_filter.lower() in j.equipo.nombre.lower()]
+        
+        limit = request.args.get('limit', type=int)
+        if limit:
+            jugadores = jugadores[:limit]
+        
+        result = []
+        for jugador in jugadores:
+            result.append({
+                'id': jugador.id,
+                'nombre': jugador.nombre,
+                'equipo': jugador.equipo.nombre if jugador.equipo else 'Sin equipo',
+                'posicion': jugador.posicion,
+                'numero': jugador.numero,
+                'edad': jugador.edad,
+                'nacionalidad': jugador.nacionalidad,
+                'goles': jugador.goles or 0,
+                'asistencias': jugador.asistencias or 0,
+                'tarjetas_amarillas': jugador.tarjetas_amarillas or 0,
+                'tarjetas_rojas': jugador.tarjetas_rojas or 0,
+                'minutos_jugados': jugador.minutos_jugados or 0
+            })
+        
+        return jsonify({
+            'success': True,
+            'data': result,
+            'total': len(result),
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"Error en API jugadores: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Error interno del servidor'
+        }), 500
+
+@app.route('/api/ligamx/goleadores', methods=['GET'])
+@require_api_key
+def api_goleadores():
+    """Endpoint para tabla de goleadores"""
+    try:
+        jugadores = LigaMXJugador.query.filter(
+            LigaMXJugador.goles > 0
+        ).order_by(LigaMXJugador.goles.desc()).all()
+        
+        limit = request.args.get('limit', 20, type=int)
+        jugadores = jugadores[:limit]
+        
+        result = []
+        for i, jugador in enumerate(jugadores, 1):
+            result.append({
+                'posicion': i,
+                'nombre': jugador.nombre,
+                'equipo': jugador.equipo.nombre if jugador.equipo else 'Sin equipo',
+                'goles': jugador.goles or 0,
+                'partidos': jugador.partidos_jugados or 0,
+                'minutos': jugador.minutos_jugados or 0,
+                'promedio_gol': round((jugador.goles or 0) / max((jugador.partidos_jugados or 1), 1), 2)
+            })
+        
+        return jsonify({
+            'success': True,
+            'data': result,
+            'total': len(result),
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"Error en API goleadores: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Error interno del servidor'
+        }), 500
+
+@app.route('/api/ligamx/asistencias', methods=['GET'])
+@require_api_key
+def api_asistencias():
+    """Endpoint para líderes en asistencias"""
+    try:
+        jugadores = LigaMXJugador.query.filter(
+            LigaMXJugador.asistencias > 0
+        ).order_by(LigaMXJugador.asistencias.desc()).all()
+        
+        limit = request.args.get('limit', 20, type=int)
+        jugadores = jugadores[:limit]
+        
+        result = []
+        for i, jugador in enumerate(jugadores, 1):
+            result.append({
+                'posicion': i,
+                'nombre': jugador.nombre,
+                'equipo': jugador.equipo.nombre if jugador.equipo else 'Sin equipo',
+                'asistencias': jugador.asistencias or 0,
+                'partidos': jugador.partidos_jugados or 0,
+                'minutos': jugador.minutos_jugados or 0
+            })
+        
+        return jsonify({
+            'success': True,
+            'data': result,
+            'total': len(result),
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"Error en API asistencias: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Error interno del servidor'
+        }), 500
+
+@app.route('/api/ligamx/noticias', methods=['GET'])
+@require_api_key
+def api_noticias():
+    """Endpoint para noticias de Liga MX"""
+    try:
+        noticias = LigaMXNoticia.query.order_by(LigaMXNoticia.fecha.desc()).all()
+        
+        limit = request.args.get('limit', 10, type=int)
+        noticias = noticias[:limit]
+        
+        result = []
+        for noticia in noticias:
+            result.append({
+                'id': noticia.id,
+                'titulo': noticia.titulo,
+                'resumen': noticia.resumen,
+                'url': noticia.url,
+                'fuente': noticia.fuente,
+                'fecha': noticia.fecha.isoformat() if noticia.fecha else None,
+                'imagen_url': noticia.imagen_url
+            })
+        
+        return jsonify({
+            'success': True,
+            'data': result,
+            'total': len(result),
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"Error en API noticias: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Error interno del servidor'
+        }), 500
+
+# Call this function when the app starts
+with app.app_context():
+    create_admin_user()
+    # Inicializar secciones por defecto
+    #content_manager.initialize_default_sections()
+    # Configurar APIs de música
+    configure_music_apis()

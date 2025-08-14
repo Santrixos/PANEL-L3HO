@@ -6,6 +6,9 @@ Panel L3HO is a professional web-based administrative control system for managin
 
 Preferred communication style: Simple, everyday language.
 Data integrity: Only real data, no mock or fictional content - user specifically requested "QUIERO TODO REAL NADA FICTICIO".
+API Key Management: Single centralized API key system without usage limits for personal/professional use.
+Design requirements: Modern, clean, responsive interface using TailwindCSS with sidebar navigation.
+Data sources: Multiple Liga MX sources including ESPN, Mediotiempo, Liga MX oficial, SofaScore, FlashScore, OneFootball.
 
 # System Architecture
 

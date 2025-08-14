@@ -1,0 +1,308 @@
+{% extends "base_new.html" %}
+
+{% block page_title %}API Documentation{% endblock %}
+{% block page_description %}Documentación completa de la API de Liga MX{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header con información general -->
+    <div class="bg-white dark:bg-gray-800 shadow-lg rounded-xl p-6">
+        <div class="flex items-center space-x-4 mb-6">
+            <div class="p-3 bg-green-100 dark:bg-green-900 rounded-lg">
+                <i class="fas fa-code text-green-600 dark:text-green-400 text-2xl"></i>
+            </div>
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 dark:text-white">API Liga MX - Panel L3HO</h1>
+                <p class="text-gray-600 dark:text-gray-400">API completa de Liga MX con datos en tiempo real</p>
+            </div>
+        </div>
+        
+        <!-- Información de autenticación -->
+        <div class="bg-blue-50 dark:bg-blue-900/50 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
+            <h3 class="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-2">
+                <i class="fas fa-key mr-2"></i>Autenticación
+            </h3>
+            <p class="text-blue-800 dark:text-blue-200 mb-2">
+                Usa la API Key en el header de tus peticiones:
+            </p>
+            <code class="bg-blue-100 dark:bg-blue-800 text-blue-900 dark:text-blue-100 px-3 py-1 rounded text-sm">
+                X-API-Key: {{ api_key if api_key else 'L3HO_LIGAMX_MASTER_KEY_2025_UNLIMITED' }}
+            </code>
+        </div>
+    </div>
+
+    <!-- Estadísticas de la API -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg">
+            <div class="flex items-center">
+                <div class="p-3 bg-green-100 dark:bg-green-900 rounded-lg">
+                    <i class="fas fa-football-ball text-green-600 dark:text-green-400 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-2xl font-semibold text-gray-900 dark:text-white">18</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Equipos activos</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg">
+            <div class="flex items-center">
+                <div class="p-3 bg-blue-100 dark:bg-blue-900 rounded-lg">
+                    <i class="fas fa-chart-line text-blue-600 dark:text-blue-400 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-2xl font-semibold text-gray-900 dark:text-white">12</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Endpoints disponibles</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg">
+            <div class="flex items-center">
+                <div class="p-3 bg-purple-100 dark:bg-purple-900 rounded-lg">
+                    <i class="fas fa-infinity text-purple-600 dark:text-purple-400 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-2xl font-semibold text-gray-900 dark:text-white">∞</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Sin límites</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg">
+            <div class="flex items-center">
+                <div class="p-3 bg-orange-100 dark:bg-orange-900 rounded-lg">
+                    <i class="fas fa-clock text-orange-600 dark:text-orange-400 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-2xl font-semibold text-gray-900 dark:text-white">24/7</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Actualización automática</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Endpoints -->
+    <div class="bg-white dark:bg-gray-800 shadow-lg rounded-xl overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
+                <i class="fas fa-list mr-2"></i>Endpoints Disponibles
+            </h2>
+        </div>
+        
+        <div class="p-6 space-y-6">
+            <!-- Equipos -->
+            <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Equipos</h3>
+                    <span class="px-3 py-1 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-sm font-medium rounded-full">GET</span>
+                </div>
+                
+                <div class="space-y-3">
+                    <div>
+                        <code class="bg-gray-100 dark:bg-gray-700 px-3 py-2 rounded text-sm block">/api/ligamx/equipos</code>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Lista todos los equipos de Liga MX</p>
+                    </div>
+                    
+                    <div>
+                        <code class="bg-gray-100 dark:bg-gray-700 px-3 py-2 rounded text-sm block">/api/ligamx/equipos/{equipo_id}</code>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Información detallada de un equipo específico</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabla de posiciones -->
+            <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Tabla de Posiciones</h3>
+                    <span class="px-3 py-1 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-sm font-medium rounded-full">GET</span>
+                </div>
+                
+                <div>
+                    <code class="bg-gray-100 dark:bg-gray-700 px-3 py-2 rounded text-sm block">/api/ligamx/tabla</code>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Tabla de posiciones actualizada con estadísticas completas</p>
+                </div>
+            </div>
+
+            <!-- Partidos -->
+            <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Partidos</h3>
+                    <span class="px-3 py-1 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-sm font-medium rounded-full">GET</span>
+                </div>
+                
+                <div class="space-y-3">
+                    <div>
+                        <code class="bg-gray-100 dark:bg-gray-700 px-3 py-2 rounded text-sm block">/api/ligamx/partidos</code>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Lista de partidos (próximos y pasados)</p>
+                    </div>
+                    
+                    <div>
+                        <code class="bg-gray-100 dark:bg-gray-700 px-3 py-2 rounded text-sm block">/api/ligamx/partidos/proximos</code>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Próximos partidos programados</p>
+                    </div>
+                    
+                    <div>
+                        <code class="bg-gray-100 dark:bg-gray-700 px-3 py-2 rounded text-sm block">/api/ligamx/partidos/resultados</code>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Resultados de partidos jugados</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Jugadores -->
+            <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Jugadores</h3>
+                    <span class="px-3 py-1 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-sm font-medium rounded-full">GET</span>
+                </div>
+                
+                <div class="space-y-3">
+                    <div>
+                        <code class="bg-gray-100 dark:bg-gray-700 px-3 py-2 rounded text-sm block">/api/ligamx/jugadores</code>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Lista completa de jugadores</p>
+                    </div>
+                    
+                    <div>
+                        <code class="bg-gray-100 dark:bg-gray-700 px-3 py-2 rounded text-sm block">/api/ligamx/goleadores</code>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Tabla de goleadores del torneo</p>
+                    </div>
+                    
+                    <div>
+                        <code class="bg-gray-100 dark:bg-gray-700 px-3 py-2 rounded text-sm block">/api/ligamx/asistencias</code>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Líderes en asistencias</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Noticias -->
+            <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Noticias</h3>
+                    <span class="px-3 py-1 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-sm font-medium rounded-full">GET</span>
+                </div>
+                
+                <div>
+                    <code class="bg-gray-100 dark:bg-gray-700 px-3 py-2 rounded text-sm block">/api/ligamx/noticias</code>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Últimas noticias de Liga MX</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Parámetros de consulta -->
+    <div class="bg-white dark:bg-gray-800 shadow-lg rounded-xl overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
+                <i class="fas fa-filter mr-2"></i>Parámetros de Consulta
+            </h2>
+        </div>
+        
+        <div class="p-6">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead>
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Parámetro</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Descripción</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Ejemplo</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                        <tr>
+                            <td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">equipo</td>
+                            <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">Filtrar por nombre de equipo</td>
+                            <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400"><code>?equipo=america</code></td>
+                        </tr>
+                        <tr>
+                            <td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">jugador</td>
+                            <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">Filtrar por nombre de jugador</td>
+                            <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400"><code>?jugador=gonzalez</code></td>
+                        </tr>
+                        <tr>
+                            <td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">fecha</td>
+                            <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">Filtrar por fecha (YYYY-MM-DD)</td>
+                            <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400"><code>?fecha=2025-01-15</code></td>
+                        </tr>
+                        <tr>
+                            <td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">limit</td>
+                            <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">Límite de resultados</td>
+                            <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400"><code>?limit=10</code></td>
+                        </tr>
+                        <tr>
+                            <td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">format</td>
+                            <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">Formato de respuesta (json, xml)</td>
+                            <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400"><code>?format=json</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ejemplos de respuesta -->
+    <div class="bg-white dark:bg-gray-800 shadow-lg rounded-xl overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
+                <i class="fas fa-code mr-2"></i>Ejemplos de Respuesta
+            </h2>
+        </div>
+        
+        <div class="p-6">
+            <div class="space-y-4">
+                <div>
+                    <h4 class="text-lg font-medium text-gray-900 dark:text-white mb-2">GET /api/ligamx/equipos</h4>
+                    <pre class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg text-sm overflow-x-auto"><code>{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "nombre": "Club América",
+      "nombre_corto": "América",
+      "ciudad": "Ciudad de México",
+      "estadio": "Estadio Azteca",
+      "fundado": 1916,
+      "escudo_url": "/static/logos/america.png",
+      "posicion": 1,
+      "puntos": 45,
+      "partidos_jugados": 17,
+      "ganados": 14,
+      "empatados": 3,
+      "perdidos": 0
+    }
+  ],
+  "total": 18,
+  "timestamp": "2025-01-14T12:00:00Z"
+}</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fuentes de datos -->
+    <div class="bg-white dark:bg-gray-800 shadow-lg rounded-xl p-6">
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+            <i class="fas fa-database mr-2"></i>Fuentes de Datos
+        </h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                <h4 class="font-semibold text-gray-900 dark:text-white mb-2">Fuentes Primarias</h4>
+                <ul class="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                    <li><i class="fas fa-external-link-alt mr-2"></i>ESPN México</li>
+                    <li><i class="fas fa-external-link-alt mr-2"></i>Liga MX Oficial</li>
+                    <li><i class="fas fa-external-link-alt mr-2"></i>Mediotiempo</li>
+                </ul>
+            </div>
+            
+            <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                <h4 class="font-semibold text-gray-900 dark:text-white mb-2">Fuentes Secundarias</h4>
+                <ul class="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                    <li><i class="fas fa-external-link-alt mr-2"></i>SofaScore</li>
+                    <li><i class="fas fa-external-link-alt mr-2"></i>FlashScore</li>
+                    <li><i class="fas fa-external-link-alt mr-2"></i>OneFootball</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,73 @@
+Necesito que tomes mi proyecto actual PANEL-L3HO (backend Flask + frontend HTML/CSS/JS + SQLite) y lo mejores para que sea un panel de control profesional, moderno y completo, compatible con Termux.
+
+Requisitos clave:
+
+Diseño y organización:
+
+Interfaz limpia, moderna y responsiva (usar TailwindCSS o Bootstrap).
+
+Menú lateral con secciones: Fútbol, Películas, Música, Apps Modificadas, Configuración, API Keys.
+
+Mostrar gráficos y tablas dinámicas para la información de fútbol.
+
+API Key:
+
+Eliminar todas las API Keys existentes en el proyecto.
+
+Crear una única API Key nueva, segura y funcional, para toda la API de la Liga MX.
+
+No poner límite de uso, tiempo ni caducidad (uso personal y profesional).
+
+Agregar un apartado en el panel para gestionar API Keys de cualquier servicio, con nombre, descripción, opción de agregar, editar, desactivar y eliminar.
+
+API de la Liga MX (integrada en el panel):
+
+Obtener todos los datos más recientes de los 18 equipos:
+
+Tabla de posiciones
+
+Calendario de partidos (próximos y pasados)
+
+Resultados en vivo
+
+Estadísticas completas de jugadores (goles, asistencias, tarjetas, minutos, etc.)
+
+Estadísticas de equipos (posesión, tiros, faltas, etc.)
+
+Goleadores y líderes de asistencias
+
+Logos y escudos oficiales
+
+Noticias y alineaciones
+
+Usar scraping y/o APIs públicas de las siguientes fuentes:
+
+https://ligamx.net
+
+https://www.espn.com.mx/futbol/liga/_/nombre/mex.1
+
+https://www.futboltotal.com.mx
+
+https://www.mediotiempo.com/futbol/liga-mx
+
+https://www.sofascore.com/es/torneo/futbol/mexico/liga-mx/123
+
+https://www.flashscore.com.mx/futbol/mexico/liga-mx
+
+https://www.onefootball.com/es/competicion/liga-mx-1073
+
+Guardar todo en la base de datos SQLite del panel para acceso rápido y consultas históricas.
+
+Crear endpoints que devuelvan JSON y permitan filtros (?equipo=X, ?jugador=Y).
+
+Documentar todos los endpoints en /api/info y con Swagger UI.
+
+Incluir script de actualización automática para refrescar todos los datos sin intervención manual.
+
+Objetivo final:
+
+Que el nuevo PANEL-L3HO sea un panel profesional, atractivo y funcional.
+
+Que toda la API de la Liga MX esté completa y actualizada en todo momento.
+
+Que solo haya una API Key central sin límites de uso.
