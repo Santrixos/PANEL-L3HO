@@ -2203,8 +2203,8 @@ def api_liga_mx_data_completa():
         # Obtener tabla actualizada
         tabla_datos = data_manager.get_tabla_actualizada()
         
-        # Obtener partidos recientes
-        partidos = LigaMXPartido.query.filter_by(temporada='2024').order_by(LigaMXPartido.fecha_partido.desc()).limit(10).all()
+        # Obtener partidos recientes del 2025
+        partidos = LigaMXPartido.query.filter_by(temporada='2025').order_by(LigaMXPartido.fecha_partido.desc()).limit(10).all()
         
         # Obtener noticias recientes
         noticias = LigaMXNoticia.query.filter_by(is_active=True).order_by(LigaMXNoticia.created_at.desc()).limit(5).all()
@@ -2295,7 +2295,7 @@ def api_publica_liga_mx():
         response_data = {
             'status': 'success',
             'liga': 'Liga MX',
-            'temporada': '2024',
+            'temporada': '2025',
             'tabla_posiciones': tabla_datos,
             'partidos_recientes': [{
                 'jornada': p.jornada,
