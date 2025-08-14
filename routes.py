@@ -24,6 +24,26 @@ def index():
         return redirect(url_for('dashboard'))
     return redirect(url_for('login'))
 
+@app.route('/health')
+def health_check():
+    """Endpoint de salud para verificar que el servidor está funcionando públicamente"""
+    return jsonify({
+        "status": "active",
+        "message": "Panel L3HO API funcionando",
+        "liga": "Liga MX Apertura 2025",
+        "api_key_required": "L3HO_LIGAMX_MASTER_KEY_2025_UNLIMITED",
+        "endpoints": [
+            "/api/goleadores",
+            "/api/noticias", 
+            "/api/public/liga-mx"
+        ]
+    }), 200
+
+@app.route('/ping')
+def ping():
+    """Simple ping endpoint para mantener el servidor activo"""
+    return "pong", 200
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
