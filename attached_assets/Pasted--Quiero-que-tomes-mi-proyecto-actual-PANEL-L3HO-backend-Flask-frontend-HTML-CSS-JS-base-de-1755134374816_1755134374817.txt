@@ -1,0 +1,40 @@
+> Quiero que tomes mi proyecto actual **PANEL-L3HO** (backend Flask + frontend HTML/CSS/JS + base de datos SQLite) y lo rediseñes para hacerlo mucho más **profesional, moderno y funcional**, manteniendo su compatibilidad con Termux.
+>
+> **Cambios y mejoras necesarias:**
+>
+> 1. **Interfaz de usuario (UI):**
+>
+>    * Rediseñar el panel con un estilo moderno, limpio y responsivo (puedes usar TailwindCSS o Bootstrap).
+>    * Incluir gráficos, tablas dinámicas y fichas visuales para datos de fútbol, películas, música, etc.
+>    * Menú lateral organizado por secciones: Fútbol, Películas, Música, Apps Modificadas, Configuración, API Keys.
+> 2. **Sistema de API Keys:**
+>
+>    * Eliminar todas las API Keys existentes en el proyecto.
+>    * Crear **una única API Key nueva** para la API de información de la Liga MX que vas a implementar ahora.
+>    * Agregar un apartado específico en el panel para gestionar API Keys de cualquier servicio, con nombre identificativo y descripción de uso.
+>    * Permitir agregar, editar, desactivar y eliminar API Keys desde el panel.
+> 3. **API de la Liga MX (integrada en el panel):**
+>
+>    * Crear la API en Python (Flask) que obtenga **todos los datos recientes de los 18 equipos** usando scraping y APIs públicas gratuitas de las siguientes fuentes:
+>
+>      1. [https://ligamx.net](https://ligamx.net)
+>      2. [https://www.espn.com.mx/futbol/liga/\_/nombre/mex.1](https://www.espn.com.mx/futbol/liga/_/nombre/mex.1)
+>      3. [https://www.futboltotal.com.mx](https://www.futboltotal.com.mx)
+>      4. [https://www.mediotiempo.com/futbol/liga-mx](https://www.mediotiempo.com/futbol/liga-mx)
+>      5. [https://www.sofascore.com/es/torneo/futbol/mexico/liga-mx/123](https://www.sofascore.com/es/torneo/futbol/mexico/liga-mx/123)
+>      6. [https://www.flashscore.com.mx/futbol/mexico/liga-mx](https://www.flashscore.com.mx/futbol/mexico/liga-mx)
+>      7. [https://www.onefootball.com/es/competicion/liga-mx-1073](https://www.onefootball.com/es/competicion/liga-mx-1073)
+>    * Guardar los datos en la base de datos SQLite del panel.
+>    * Crear endpoints para: tabla, calendario, resultados, estadísticas, jugadores, logos, noticias y más.
+>    * Documentar todos los endpoints en `/api/info` y con Swagger UI.
+> 4. **Funciones adicionales:**
+>
+>    * En el panel, mostrar **gráficos y tablas interactivas** para los datos de la Liga MX (tabla de posiciones, estadísticas de jugadores, ranking de goleadores, etc.).
+>    * Agregar un sistema de **actualización automática** para que los datos se refresquen cada cierto tiempo sin intervención manual.
+>    * Optimizar todo el código para que funcione sin errores en **Replit** y **Termux**.
+>
+> **Objetivo final:**
+>
+> * Que el PANEL-L3HO sea más profesional, con un diseño atractivo y una API Key centralizada para todo.
+> * Que la API de la Liga MX esté totalmente integrada, actualizada y lista para usarse desde el panel.
+> * Que todo funcione en Termux sin configuraciones extra.

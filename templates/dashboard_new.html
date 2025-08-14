@@ -1,0 +1,310 @@
+{% extends "base_new.html" %}
+
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard Principal{% endblock %}
+{% block page_description %}Vista general del sistema Panel L3HO{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Tarjetas de estadísticas principales -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Liga MX -->
+        <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-lg rounded-xl card-hover">
+            <div class="p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-futbol text-white text-xl"></i>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-2xl font-semibold text-gray-900 dark:text-white">18</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Equipos Liga MX</p>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-500 dark:text-gray-400">Última actualización</span>
+                        <span class="status-active" id="liga-mx-status">Activo</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- API Keys -->
+        <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-lg rounded-xl card-hover">
+            <div class="p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-key text-white text-xl"></i>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-2xl font-semibold text-gray-900 dark:text-white" id="api-keys-count">{{ stats.total_apis or 0 }}</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">API Keys</p>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-500 dark:text-gray-400">Activas: {{ stats.active_apis or 0 }}</span>
+                        <a href="{{ url_for('admin') }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                            Gestionar
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Música -->
+        <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-lg rounded-xl card-hover">
+            <div class="p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-music text-white text-xl"></i>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-2xl font-semibold text-gray-900 dark:text-white">10</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">APIs Música</p>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-500 dark:text-gray-400">YouTube, Spotify, etc.</span>
+                        <span class="status-active">Operativo</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sistema -->
+        <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-lg rounded-xl card-hover">
+            <div class="p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-yellow-500 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-server text-white text-xl"></i>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-2xl font-semibold text-gray-900 dark:text-white">99%</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Disponibilidad</p>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-500 dark:text-gray-400">Estado del sistema</span>
+                        <span class="status-active">Operativo</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Gráficos y datos principales -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Gráfico de uso de APIs -->
+        <div class="bg-white dark:bg-gray-800 shadow-lg rounded-xl">
+            <div class="p-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                    <i class="fas fa-chart-line mr-2"></i>Uso de APIs (Últimos 7 días)
+                </h3>
+                <div class="h-64">
+                    <canvas id="apiUsageChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tabla Liga MX rápida -->
+        <div class="bg-white dark:bg-gray-800 shadow-lg rounded-xl">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                        <i class="fas fa-trophy mr-2"></i>Liga MX - Top 5
+                    </h3>
+                    <a href="{{ url_for('football_module') }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                        Ver completa
+                    </a>
+                </div>
+                <div class="space-y-3" id="liga-mx-quick-table">
+                    <!-- Se llenará dinámicamente -->
+                    <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                        <div class="flex items-center space-x-3">
+                            <span class="w-6 h-6 bg-yellow-500 text-white rounded-full flex items-center justify-center text-xs font-bold">1</span>
+                            <span class="font-medium text-gray-900 dark:text-white">América</span>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-sm font-medium text-gray-900 dark:text-white">45 pts</div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400">15 PJ</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                        <div class="flex items-center space-x-3">
+                            <span class="w-6 h-6 bg-gray-400 text-white rounded-full flex items-center justify-center text-xs font-bold">2</span>
+                            <span class="font-medium text-gray-900 dark:text-white">Tigres</span>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-sm font-medium text-gray-900 dark:text-white">42 pts</div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400">15 PJ</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                        <div class="flex items-center space-x-3">
+                            <span class="w-6 h-6 bg-orange-500 text-white rounded-full flex items-center justify-center text-xs font-bold">3</span>
+                            <span class="font-medium text-gray-900 dark:text-white">Monterrey</span>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-sm font-medium text-gray-900 dark:text-white">39 pts</div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400">15 PJ</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Actividad reciente -->
+    <div class="bg-white dark:bg-gray-800 shadow-lg rounded-xl">
+        <div class="p-6">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                <i class="fas fa-clock mr-2"></i>Actividad Reciente
+            </h3>
+            <div class="space-y-4" id="recent-activity">
+                <div class="flex items-center space-x-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <div class="flex-shrink-0">
+                        <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
+                            <i class="fas fa-futbol text-white"></i>
+                        </div>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                            Datos de Liga MX actualizados
+                        </p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                            Hace 5 minutos
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <div class="flex-shrink-0">
+                        <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
+                            <i class="fas fa-key text-white"></i>
+                        </div>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                            API Key Liga MX verificada
+                        </p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                            Hace 15 minutos
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Configuración del gráfico de uso de APIs
+    const ctx = document.getElementById('apiUsageChart').getContext('2d');
+    const apiUsageChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
+            datasets: [{
+                label: 'Liga MX API',
+                data: [65, 78, 82, 95, 87, 92, 98],
+                borderColor: 'rgb(34, 197, 94)',
+                backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                tension: 0.4
+            }, {
+                label: 'Música API',
+                data: [45, 55, 62, 68, 71, 75, 82],
+                borderColor: 'rgb(147, 51, 234)',
+                backgroundColor: 'rgba(147, 51, 234, 0.1)',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.1)'
+                    }
+                },
+                x: {
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.1)'
+                    }
+                }
+            }
+        }
+    });
+    
+    // Función para refrescar datos (llamada por auto-refresh)
+    function refreshData() {
+        // Actualizar estadísticas
+        fetch('/api/stats')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('api-keys-count').textContent = data.total_apis || 0;
+                    // Actualizar otros elementos...
+                }
+            })
+            .catch(error => console.error('Error al refrescar datos:', error));
+    }
+    
+    // Actualizar tabla Liga MX
+    function updateLigaMXTable() {
+        fetch('/api/liga-mx/tabla-quick')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.data) {
+                    const tableContainer = document.getElementById('liga-mx-quick-table');
+                    tableContainer.innerHTML = '';
+                    
+                    data.data.slice(0, 5).forEach((equipo, index) => {
+                        const position = index + 1;
+                        const medalClass = position === 1 ? 'bg-yellow-500' : position === 2 ? 'bg-gray-400' : position === 3 ? 'bg-orange-500' : 'bg-gray-300';
+                        
+                        const row = document.createElement('div');
+                        row.className = 'flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg';
+                        row.innerHTML = `
+                            <div class="flex items-center space-x-3">
+                                <span class="w-6 h-6 ${medalClass} text-white rounded-full flex items-center justify-center text-xs font-bold">${position}</span>
+                                <span class="font-medium text-gray-900 dark:text-white">${equipo.nombre}</span>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-sm font-medium text-gray-900 dark:text-white">${equipo.puntos} pts</div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400">${equipo.partidos_jugados} PJ</div>
+                            </div>
+                        `;
+                        tableContainer.appendChild(row);
+                    });
+                }
+            })
+            .catch(error => console.error('Error al actualizar tabla Liga MX:', error));
+    }
+    
+    // Inicializar
+    document.addEventListener('DOMContentLoaded', function() {
+        updateLigaMXTable();
+        console.log('Football module initialized');
+    });
+</script>
+{% endblock %}

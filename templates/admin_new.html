@@ -1,0 +1,463 @@
+{% extends "base_new.html" %}
+
+{% block title %}Administración{% endblock %}
+{% block page_title %}Gestión de API Keys{% endblock %}
+{% block page_description %}Panel centralizado para la gestión de todas las API Keys del sistema{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header con acciones -->
+    <div class="bg-white dark:bg-gray-800 shadow-lg rounded-xl p-6">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                    <i class="fas fa-key mr-2 text-blue-500"></i>API Keys Centralizadas
+                </h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    Gestiona todas las API keys desde un solo lugar
+                </p>
+            </div>
+            <button id="add-api-key" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                <i class="fas fa-plus mr-2"></i>Nueva API Key
+            </button>
+        </div>
+    </div>
+
+    <!-- Estadísticas rápidas -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg card-hover">
+            <div class="flex items-center">
+                <div class="p-3 bg-blue-100 dark:bg-blue-900 rounded-lg">
+                    <i class="fas fa-key text-blue-600 dark:text-blue-400 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-2xl font-semibold text-gray-900 dark:text-white">{{ api_keys|length }}</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Total API Keys</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg card-hover">
+            <div class="flex items-center">
+                <div class="p-3 bg-green-100 dark:bg-green-900 rounded-lg">
+                    <i class="fas fa-check-circle text-green-600 dark:text-green-400 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-2xl font-semibold text-gray-900 dark:text-white">{{ active_count }}</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Activas</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg card-hover">
+            <div class="flex items-center">
+                <div class="p-3 bg-yellow-100 dark:bg-yellow-900 rounded-lg">
+                    <i class="fas fa-cogs text-yellow-600 dark:text-yellow-400 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-2xl font-semibold text-gray-900 dark:text-white">{{ services_count }}</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Servicios</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg card-hover">
+            <div class="flex items-center">
+                <div class="p-3 bg-purple-100 dark:bg-purple-900 rounded-lg">
+                    <i class="fas fa-clock text-purple-600 dark:text-purple-400 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-2xl font-semibold text-gray-900 dark:text-white">24h</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Última verificación</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros y búsqueda -->
+    <div class="bg-white dark:bg-gray-800 shadow-lg rounded-xl p-6">
+        <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+            <div class="flex-1">
+                <input type="text" id="search-apis" placeholder="Buscar API keys..." 
+                       class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
+            </div>
+            <div class="flex space-x-2">
+                <select id="filter-service" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
+                    <option value="">Todos los servicios</option>
+                    <option value="football">Liga MX</option>
+                    <option value="music">Música</option>
+                    <option value="movies">Películas</option>
+                    <option value="mod_apps">Apps MOD</option>
+                </select>
+                <select id="filter-status" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
+                    <option value="">Todos los estados</option>
+                    <option value="active">Activo</option>
+                    <option value="inactive">Inactivo</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de API Keys -->
+    <div class="bg-white dark:bg-gray-800 shadow-lg rounded-xl overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <h4 class="text-lg font-semibold text-gray-900 dark:text-white">
+                Lista de API Keys
+            </h4>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead class="bg-gray-50 dark:bg-gray-900">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Servicio</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tipo</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Descripción</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Estado</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Última verificación</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700" id="api-keys-table">
+                    {% for api_key in api_keys %}
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700" data-service="{{ api_key.service_name }}" data-status="{{ 'active' if api_key.is_active else 'inactive' }}">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 h-10 w-10">
+                                    {% if api_key.service_name == 'football' %}
+                                        <div class="h-10 w-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
+                                            <i class="fas fa-futbol text-green-600 dark:text-green-400"></i>
+                                        </div>
+                                    {% elif api_key.service_name == 'music' %}
+                                        <div class="h-10 w-10 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center">
+                                            <i class="fas fa-music text-purple-600 dark:text-purple-400"></i>
+                                        </div>
+                                    {% elif api_key.service_name == 'movies' %}
+                                        <div class="h-10 w-10 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
+                                            <i class="fas fa-film text-blue-600 dark:text-blue-400"></i>
+                                        </div>
+                                    {% else %}
+                                        <div class="h-10 w-10 bg-gray-100 dark:bg-gray-900 rounded-lg flex items-center justify-center">
+                                            <i class="fas fa-key text-gray-600 dark:text-gray-400"></i>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900 dark:text-white">{{ api_key.service_name|title }}</div>
+                                    <div class="text-sm text-gray-500 dark:text-gray-400">{{ api_key.service_type or 'General' }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                            {{ api_key.service_type or 'API' }}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                            {{ api_key.description or 'Sin descripción' }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if api_key.is_active %}
+                                <span class="status-active">Activo</span>
+                            {% else %}
+                                <span class="status-inactive">Inactivo</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                            {{ api_key.last_checked.strftime('%d/%m/%Y %H:%M') if api_key.last_checked else 'No verificado' }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div class="flex space-x-2">
+                                <button class="text-blue-600 hover:text-blue-800 test-api" data-id="{{ api_key.id }}">
+                                    <i class="fas fa-play-circle mr-1"></i>Probar
+                                </button>
+                                <button class="text-yellow-600 hover:text-yellow-800 edit-api" data-id="{{ api_key.id }}">
+                                    <i class="fas fa-edit mr-1"></i>Editar
+                                </button>
+                                <button class="text-red-600 hover:text-red-800 delete-api" data-id="{{ api_key.id }}">
+                                    <i class="fas fa-trash mr-1"></i>Eliminar
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal para nueva/editar API Key -->
+    <div id="api-key-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white" id="modal-title">
+                            Nueva API Key
+                        </h3>
+                        <button id="close-modal" class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    
+                    <form id="api-key-form">
+                        <input type="hidden" id="api-key-id">
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Servicio
+                                </label>
+                                <select id="service-name" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
+                                    <option value="">Seleccionar servicio</option>
+                                    <option value="football">Liga MX</option>
+                                    <option value="music">Música</option>
+                                    <option value="movies">Películas</option>
+                                    <option value="mod_apps">Apps MOD</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Tipo/Proveedor
+                                </label>
+                                <input type="text" id="service-type" placeholder="ej: tmdb, spotify, espn" 
+                                       class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    API Key
+                                </label>
+                                <input type="password" id="api-key-value" required 
+                                       class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Descripción
+                                </label>
+                                <textarea id="description" rows="3" 
+                                          class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"></textarea>
+                            </div>
+                            
+                            <div class="flex items-center">
+                                <input type="checkbox" id="is-active" checked 
+                                       class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                <label for="is-active" class="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                                    API Key activa
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-end space-x-3 mt-6">
+                            <button type="button" id="cancel-modal" 
+                                    class="px-4 py-2 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">
+                                Cancelar
+                            </button>
+                            <button type="submit" 
+                                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                                Guardar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Variables globales
+    let currentApiKeys = [];
+    let editingApiKeyId = null;
+    
+    // Elementos del DOM
+    const modal = document.getElementById('api-key-modal');
+    const form = document.getElementById('api-key-form');
+    const searchInput = document.getElementById('search-apis');
+    const serviceFilter = document.getElementById('filter-service');
+    const statusFilter = document.getElementById('filter-status');
+    
+    // Event listeners
+    document.getElementById('add-api-key').addEventListener('click', openNewApiKeyModal);
+    document.getElementById('close-modal').addEventListener('click', closeModal);
+    document.getElementById('cancel-modal').addEventListener('click', closeModal);
+    form.addEventListener('submit', handleFormSubmit);
+    
+    // Filtros y búsqueda
+    searchInput.addEventListener('input', filterApiKeys);
+    serviceFilter.addEventListener('change', filterApiKeys);
+    statusFilter.addEventListener('change', filterApiKeys);
+    
+    // Delegación de eventos para la tabla
+    document.getElementById('api-keys-table').addEventListener('click', handleTableActions);
+    
+    function openNewApiKeyModal() {
+        editingApiKeyId = null;
+        document.getElementById('modal-title').textContent = 'Nueva API Key';
+        form.reset();
+        document.getElementById('is-active').checked = true;
+        modal.classList.remove('hidden');
+    }
+    
+    function openEditApiKeyModal(apiKeyId) {
+        editingApiKeyId = apiKeyId;
+        document.getElementById('modal-title').textContent = 'Editar API Key';
+        
+        // Cargar datos de la API key
+        fetch(`/api/api-keys/${apiKeyId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const apiKey = data.data;
+                    document.getElementById('service-name').value = apiKey.service_name;
+                    document.getElementById('service-type').value = apiKey.service_type || '';
+                    document.getElementById('api-key-value').value = apiKey.api_key;
+                    document.getElementById('description').value = apiKey.description || '';
+                    document.getElementById('is-active').checked = apiKey.is_active;
+                }
+            })
+            .catch(error => {
+                console.error('Error cargando API key:', error);
+                PanelL3HO.showNotification('Error cargando datos de la API key', 'error');
+            });
+        
+        modal.classList.remove('hidden');
+    }
+    
+    function closeModal() {
+        modal.classList.add('hidden');
+        form.reset();
+        editingApiKeyId = null;
+    }
+    
+    function handleFormSubmit(e) {
+        e.preventDefault();
+        
+        const formData = {
+            service_name: document.getElementById('service-name').value,
+            service_type: document.getElementById('service-type').value,
+            api_key: document.getElementById('api-key-value').value,
+            description: document.getElementById('description').value,
+            is_active: document.getElementById('is-active').checked
+        };
+        
+        const url = editingApiKeyId ? `/api/api-keys/${editingApiKeyId}` : '/api/api-keys';
+        const method = editingApiKeyId ? 'PUT' : 'POST';
+        
+        fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                PanelL3HO.showNotification(
+                    editingApiKeyId ? 'API Key actualizada correctamente' : 'API Key creada correctamente', 
+                    'success'
+                );
+                closeModal();
+                location.reload(); // Recargar la página para mostrar los cambios
+            } else {
+                PanelL3HO.showNotification('Error: ' + data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            PanelL3HO.showNotification('Error al guardar la API key', 'error');
+        });
+    }
+    
+    function handleTableActions(e) {
+        const target = e.target.closest('button');
+        if (!target) return;
+        
+        const apiKeyId = target.dataset.id;
+        
+        if (target.classList.contains('test-api')) {
+            testApiKey(apiKeyId);
+        } else if (target.classList.contains('edit-api')) {
+            openEditApiKeyModal(apiKeyId);
+        } else if (target.classList.contains('delete-api')) {
+            deleteApiKey(apiKeyId);
+        }
+    }
+    
+    function testApiKey(apiKeyId) {
+        const button = document.querySelector(`[data-id="${apiKeyId}"].test-api`);
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Probando...';
+        button.disabled = true;
+        
+        fetch(`/api/api-keys/${apiKeyId}/test`, {method: 'POST'})
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    PanelL3HO.showNotification('API Key válida', 'success');
+                } else {
+                    PanelL3HO.showNotification('API Key inválida: ' + data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error probando API key:', error);
+                PanelL3HO.showNotification('Error al probar la API key', 'error');
+            })
+            .finally(() => {
+                button.innerHTML = originalText;
+                button.disabled = false;
+            });
+    }
+    
+    function deleteApiKey(apiKeyId) {
+        if (!confirm('¿Estás seguro de que quieres eliminar esta API key?')) return;
+        
+        fetch(`/api/api-keys/${apiKeyId}`, {method: 'DELETE'})
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    PanelL3HO.showNotification('API Key eliminada correctamente', 'success');
+                    location.reload();
+                } else {
+                    PanelL3HO.showNotification('Error: ' + data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error eliminando API key:', error);
+                PanelL3HO.showNotification('Error al eliminar la API key', 'error');
+            });
+    }
+    
+    function filterApiKeys() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const serviceFilter = document.getElementById('filter-service').value;
+        const statusFilter = document.getElementById('filter-status').value;
+        
+        const rows = document.querySelectorAll('#api-keys-table tr[data-service]');
+        
+        rows.forEach(row => {
+            const service = row.dataset.service;
+            const status = row.dataset.status;
+            const text = row.textContent.toLowerCase();
+            
+            const matchesSearch = !searchTerm || text.includes(searchTerm);
+            const matchesService = !serviceFilter || service === serviceFilter;
+            const matchesStatus = !statusFilter || status === statusFilter;
+            
+            if (matchesSearch && matchesService && matchesStatus) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+    
+    // Inicialización
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Admin module initialized');
+    });
+</script>
+{% endblock %}

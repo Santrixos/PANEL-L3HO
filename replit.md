@@ -1,6 +1,6 @@
 # Overview
 
-Panel L3HO is a web-based administrative control system for managing various digital services including movies, music, mod apps, and football. It centralizes the management of API keys, website controls, and user accounts. Built with Flask and SQLAlchemy, it features a modern, futuristic UI, role-based access control, and a modular architecture for scalability. The project aims to provide a professional master control panel with real-time data integration, including a comprehensive Liga MX API and a robust music system with advanced scraping capabilities.
+Panel L3HO is a professional web-based administrative control system for managing digital services including football (Liga MX), movies, music, and modified apps. Built with Flask and PostgreSQL, it features a completely redesigned modern UI using TailwindCSS, centralized API key management, and comprehensive real-time data integration. The system includes a fully integrated Liga MX API with multi-source scraping, interactive dashboards with charts and tables, and modular architecture optimized for both Replit and Termux environments.
 
 # User Preferences
 
@@ -10,7 +10,7 @@ Data integrity: Only real data, no mock or fictional content - user specifically
 # System Architecture
 
 ## Frontend Architecture
-The application uses a server-side rendered architecture with Flask templates, Bootstrap 5 for responsiveness, and Font Awesome for icons. Custom CSS provides a futuristic dark theme with neon accents and animations. JavaScript handles interactions and UI enhancements.
+The application uses a modern server-side rendered architecture with Flask templates and TailwindCSS for professional, responsive design. Features include interactive charts via Chart.js, dynamic tables, and a clean sidebar navigation. The UI is optimized for both desktop and mobile with dark/light theme support and smooth animations.
 
 ### Module System
 The system is modular, supporting:
@@ -61,7 +61,8 @@ Uses Flask sessions with secure password hashing and role-based access control f
 - **Environment Variables**: Configuration management.
 
 ## Integrated External Services
-- **Liga MX Data**: ESPN México, Liga MX Official, Transfermarkt (for player data).
-- **Music Data**: Spotify API, YouTube Data API, Last.fm API, Genius API, Deezer API, SoundCloud API, Audiomack API, Jamendo API, Discogs API, Musixmatch API, Vagalume API (for music and lyrics).
-- **Download System**: `yt-dlp` for audio downloads.
-- **General APIs**: Placeholder integrations for TMDB (movies) and APK Mirror (mod apps).
+- **Liga MX Data**: Multi-source scraping from ligamx.net, ESPN México, Futbol Total, Mediotiempo, SofaScore, FlashScore, and OneFootball for comprehensive Liga MX coverage.
+- **Music Data**: Spotify API, YouTube Data API, Last.fm API, Genius API, Deezer API, SoundCloud API, Audiomack API, Jamendo API, Discogs API, Musixmatch API, Vagalume API.
+- **Movies Data**: TMDB API integration for movie catalogs and metadata.
+- **Apps MOD**: APK Mirror integration for modified applications management.
+- **Automated Updates**: Scheduled data refresh system for real-time information.
