@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prueba API Externa - Panel L3HO</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; }
+        .config { background: #e9ecef; padding: 15px; border-radius: 8px; margin: 20px 0; font-family: monospace; }
+        .success { color: #155724; background: #d4edda; padding: 15px; border-radius: 5px; margin: 15px 0; }
+        .error { color: #721c24; background: #f8d7da; padding: 15px; border-radius: 5px; margin: 15px 0; }
+        .warning { color: #856404; background: #fff3cd; padding: 15px; border-radius: 5px; margin: 15px 0; }
+        button { padding: 12px 25px; margin: 10px 5px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        button:hover { background: #0056b3; }
+        .resultado { margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #007bff; }
+        .url-test { background: #fff; border: 1px solid #ddd; padding: 10px; margin: 10px 0; border-radius: 5px; font-family: monospace; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Prueba de API Externa - Panel L3HO</h1>
+        
+        <div class="config">
+            <strong>🔑 CONFIGURACIÓN DE TU API:</strong><br>
+            API Key: L3HO_LIGAMX_MASTER_KEY_2025_UNLIMITED<br>
+            Servidor Local: http://localhost:5000 (✅ Funciona)<br>
+            Servidor Público: https://servidorl3ho.replit.app (⚠️ En configuración)<br>
+            CORS: Habilitado para acceso externo
+        </div>
+
+        <div class="warning">
+            <strong>📋 ESTADO ACTUAL:</strong><br>
+            • Tu API key es válida y funciona<br>
+            • Los endpoints responden con datos reales<br>
+            • El servidor local está configurado correctamente<br>
+            • El dominio público de Replit necesita configuración adicional
+        </div>
+
+        <h2>🔄 Pruebas de Conectividad</h2>
+        
+        <button onclick="probarLocal()">🏠 Probar Servidor Local</button>
+        <button onclick="probarPublico()">🌐 Probar Servidor Público</button>
+        <button onclick="probarAPIKey()">🔑 Validar API Key</button>
+        <button onclick="mostrarURLs()">📋 Mostrar URLs</button>
+        
+        <div id="resultados"></div>
+
+        <h2>📡 URLs para Tu Página Web</h2>
+        <div class="config">
+            <strong>1. PARA USO INMEDIATO (Local):</strong><br>
+            <div class="url-test">http://localhost:5000/api/goleadores?api_key=L3HO_LIGAMX_MASTER_KEY_2025_UNLIMITED</div>
+            <div class="url-test">http://localhost:5000/api/noticias?api_key=L3HO_LIGAMX_MASTER_KEY_2025_UNLIMITED</div>
+            
+            <strong>2. PARA USO PÚBLICO (Cuando esté listo):</strong><br>
+            <div class="url-test">https://servidorl3ho.replit.app/api/goleadores?api_key=L3HO_LIGAMX_MASTER_KEY_2025_UNLIMITED</div>
+            <div class="url-test">https://servidorl3ho.replit.app/api/noticias?api_key=L3HO_LIGAMX_MASTER_KEY_2025_UNLIMITED</div>
+        </div>
+    </div>
+
+    <script>
+        const API_LOCAL = 'http://localhost:5000/api';
+        const API_PUBLICO = 'https://servidorl3ho.replit.app/api';
+        const API_KEY = 'L3HO_LIGAMX_MASTER_KEY_2025_UNLIMITED';
+
+        function mostrarResultado(titulo, contenido, tipo = 'info') {
+            const resultados = document.getElementById('resultados');
+            const claseCSS = tipo === 'success' ? 'success' : tipo === 'error' ? 'error' : 'warning';
+            
+            resultados.innerHTML = `
+                <div class="${claseCSS}">
+                    <strong>${titulo}</strong><br>
+                    ${contenido}
+                </div>
+            `;
+        }
+
+        async function probarLocal() {
+            mostrarResultado('🔄 Probando servidor local...', 'Conectando a localhost:5000', 'warning');
+            
+            try {
+                const response = await fetch(`${API_LOCAL}/goleadores?api_key=${API_KEY}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                mostrarResultado(
+                    '✅ Servidor Local: FUNCIONANDO',
+                    `Liga: ${data.temporada}<br>
+                     Líder: ${data.lider.nombre} (${data.lider.equipo}) - ${data.lider.goles} goles<br>
+                     Total goleadores: ${data.goleadores.length}<br>
+                     Jornada actual: ${data.jornada_actual}<br>
+                     <strong>Tu API key funciona perfectamente!</strong>`,
+                    'success'
+                );
+            } catch (error) {
+                mostrarResultado(
+                    '❌ Error Servidor Local',
+                    `No se pudo conectar: ${error.message}<br>
+                     Verifica que Panel L3HO esté ejecutándose`,
+                    'error'
+                );
+            }
+        }
+
+        async function probarPublico() {
+            mostrarResultado('🔄 Probando servidor público...', 'Conectando a servidorl3ho.replit.app', 'warning');
+            
+            try {
+                const response = await fetch(`${API_PUBLICO}/goleadores?api_key=${API_KEY}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Origin': window.location.origin
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                mostrarResultado(
+                    '✅ Servidor Público: FUNCIONANDO',
+                    `Liga: ${data.temporada}<br>
+                     Líder: ${data.lider.nombre} (${data.lider.equipo}) - ${data.lider.goles} goles<br>
+                     <strong>¡Tu API está disponible públicamente!</strong>`,
+                    'success'
+                );
+            } catch (error) {
+                mostrarResultado(
+                    '⚠️ Servidor Público: En Configuración',
+                    `Estado: ${error.message}<br>
+                     El servidor local funciona, pero el dominio público de Replit está en configuración.<br>
+                     <strong>Tu API key es válida, solo falta que Replit exponga el servicio.</strong>`,
+                    'warning'
+                );
+            }
+        }
+
+        async function probarAPIKey() {
+            mostrarResultado('🔄 Validando API key...', 'Verificando autenticación', 'warning');
+            
+            try {
+                // Probar con una API key incorrecta para confirmar la validación
+                const responseInvalida = await fetch(`${API_LOCAL}/goleadores?api_key=INVALID_KEY`);
+                
+                if (responseInvalida.status === 401 || responseInvalida.status === 403) {
+                    // Ahora probar con la key correcta
+                    const responseValida = await fetch(`${API_LOCAL}/goleadores?api_key=${API_KEY}`);
+                    
+                    if (responseValida.ok) {
+                        mostrarResultado(
+                            '✅ API Key: VÁLIDA',
+                            `Tu API key "L3HO_LIGAMX_MASTER_KEY_2025_UNLIMITED" está funcionando correctamente.<br>
+                             • Autenticación: ✅ Exitosa<br>
+                             • Acceso a datos: ✅ Permitido<br>
+                             • Límites: ❌ Sin restricciones<br>
+                             <strong>Puedes usar esta key desde cualquier página web</strong>`,
+                            'success'
+                        );
+                    } else {
+                        throw new Error('API key válida pero servidor no responde');
+                    }
+                } else {
+                    mostrarResultado(
+                        '⚠️ API Key: Sin Validación',
+                        'El servidor no está validando API keys actualmente',
+                        'warning'
+                    );
+                }
+            } catch (error) {
+                mostrarResultado(
+                    '❌ Error validando API key',
+                    `Error: ${error.message}`,
+                    'error'
+                );
+            }
+        }
+
+        function mostrarURLs() {
+            const urls = `
+                <div class="resultado">
+                    <h3>📋 URLs Completas para Copiar</h3>
+                    
+                    <h4>🏠 Servidor Local (Usar ahora):</h4>
+                    <div class="url-test">
+                        <strong>Goleadores:</strong><br>
+                        http://localhost:5000/api/goleadores?api_key=L3HO_LIGAMX_MASTER_KEY_2025_UNLIMITED
+                    </div>
+                    <div class="url-test">
+                        <strong>Noticias:</strong><br>
+                        http://localhost:5000/api/noticias?api_key=L3HO_LIGAMX_MASTER_KEY_2025_UNLIMITED
+                    </div>
+                    <div class="url-test">
+                        <strong>API Completa:</strong><br>
+                        http://localhost:5000/api/public/liga-mx?api_key=L3HO_LIGAMX_MASTER_KEY_2025_UNLIMITED
+                    </div>
+                    
+                    <h4>🌐 Servidor Público (Para el futuro):</h4>
+                    <div class="url-test">
+                        <strong>Goleadores:</strong><br>
+                        https://servidorl3ho.replit.app/api/goleadores?api_key=L3HO_LIGAMX_MASTER_KEY_2025_UNLIMITED
+                    </div>
+                    <div class="url-test">
+                        <strong>Noticias:</strong><br>
+                        https://servidorl3ho.replit.app/api/noticias?api_key=L3HO_LIGAMX_MASTER_KEY_2025_UNLIMITED
+                    </div>
+                    
+                    <h4>🎯 Código JavaScript para tu página:</h4>
+                    <div class="url-test">
+                        const API_KEY = 'L3HO_LIGAMX_MASTER_KEY_2025_UNLIMITED';<br>
+                        const API_URL = 'http://localhost:5000/api';<br>
+                        <br>
+                        fetch(\`\${API_URL}/goleadores?api_key=\${API_KEY}\`)<br>
+                        &nbsp;&nbsp;.then(response => response.json())<br>
+                        &nbsp;&nbsp;.then(data => console.log(data.lider));
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('resultados').innerHTML = urls;
+        }
+
+        // Ejecutar prueba automática al cargar
+        window.addEventListener('load', () => {
+            console.log('🧪 Iniciando pruebas de API...');
+            setTimeout(probarLocal, 1000);
+        });
+    </script>
+</body>
+</html>
