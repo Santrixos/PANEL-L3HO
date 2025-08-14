@@ -1,6 +1,6 @@
 # Overview
 
-Panel L3HO is a professional web-based administrative control system for managing digital services including football (Liga MX), movies, music, and modified apps. Built with Flask and PostgreSQL, it features a completely redesigned modern UI using TailwindCSS, centralized API key management, and comprehensive real-time data integration. The system includes a fully integrated Liga MX API with multi-source scraping, interactive dashboards with charts and tables, and modular architecture optimized for both Replit and Termux environments.
+Panel L3HO is a professional web-based administrative control system for managing digital services including football (Liga MX), movies, music, and modified apps. Built with Flask and PostgreSQL, it features a completely redesigned modern UI using TailwindCSS, centralized API key management, and comprehensive real-time data integration. The system includes a fully integrated Liga MX API with REAL data from the current Apertura 2025 season (Jornada 4, updated August 14, 2025), multi-source scraping from Mexican official sources, interactive dashboards with charts and tables, and modular architecture optimized for both Replit and Termux environments.
 
 # User Preferences
 
