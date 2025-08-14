@@ -1,0 +1,73 @@
+
+
+> Necesito que tomes mi proyecto actual **PANEL-L3HO** (backend Flask + frontend HTML/CSS/JS + base de datos SQLite) y lo transformes en un **panel profesional y moderno** que gestione datos reales y actualizados de la **Liga MX** temporada **2025–2026**, compatible con **Termux**.
+>
+> **Requisitos principales:**
+>
+> 1. **Diseño y estructura del panel:**
+>
+>    * Interfaz limpia, moderna y responsiva (usar TailwindCSS o Bootstrap).
+>    * Menú lateral con secciones: Fútbol, Películas, Música, Apps Modificadas, Configuración, API Keys.
+>    * En la sección de Fútbol, mostrar tablas, calendarios, estadísticas y gráficos interactivos.
+> 2. **Sistema de API Keys:**
+>
+>    * Eliminar todas las API Keys actuales del proyecto.
+>    * Crear **una única API Key nueva**, segura y funcional, para toda la API de la Liga MX.
+>    * Sin límite de uso, tiempo o caducidad (uso personal y profesional).
+>    * Ubicar esta API Key **en la sección de API Keys** al final de la lista, con nombre y descripción claros.
+>    * El panel debe permitir agregar, editar, desactivar y eliminar API Keys para cualquier otro servicio.
+> 3. **API de la Liga MX (datos reales 2025–2026):**
+>
+>    * Obtener **todos los datos más recientes** y reales, sin nada ficticio, usando **web scraping** y APIs públicas de múltiples fuentes principales y secundarias.
+>    * **Fuentes principales:**
+>
+>      1. [https://ligamx.net](https://ligamx.net)
+>      2. [https://www.espn.com.mx/futbol/liga/\_/nombre/mex.1](https://www.espn.com.mx/futbol/liga/_/nombre/mex.1)
+>      3. [https://www.futboltotal.com.mx](https://www.futboltotal.com.mx)
+>      4. [https://www.mediotiempo.com/futbol/liga-mx](https://www.mediotiempo.com/futbol/liga-mx)
+>      5. [https://www.sofascore.com/es/torneo/futbol/mexico/liga-mx/123](https://www.sofascore.com/es/torneo/futbol/mexico/liga-mx/123)
+>      6. [https://www.flashscore.com.mx/futbol/mexico/liga-mx](https://www.flashscore.com.mx/futbol/mexico/liga-mx)
+>      7. [https://www.onefootball.com/es/competicion/liga-mx-1073](https://www.onefootball.com/es/competicion/liga-mx-1073)
+>    * **Fuentes secundarias para verificación y datos extra:**
+>      8\. [https://www.goal.com/es-mx](https://www.goal.com/es-mx)
+>      9\. [https://www.record.com.mx/futbol-liga-mx](https://www.record.com.mx/futbol-liga-mx)
+>      10\. [https://www.as.com/mexico/futbol/liga-mx](https://www.as.com/mexico/futbol/liga-mx)
+>      11\. [https://www.foxsports.com.mx/futbol/liga-mx](https://www.foxsports.com.mx/futbol/liga-mx)
+>    * Debe obtener y guardar:
+>
+>      * Tabla de posiciones
+>      * Calendario (próximos y pasados)
+>      * Resultados en vivo
+>      * Estadísticas completas de jugadores (goles, asistencias, tarjetas, minutos, etc.)
+>      * Estadísticas de equipos (posesión, tiros, faltas, etc.)
+>      * Goleadores y líderes de asistencias
+>      * Logos y escudos oficiales
+>      * Noticias y alineaciones
+>    * Guardar todo en SQLite para acceso rápido y consultas históricas.
+>    * Actualizar automáticamente todos los datos **cada 30 minutos** sin intervención manual.
+> 4. **Endpoints y documentación:**
+>
+>    * Endpoints en JSON con filtros (`?equipo=X`, `?jugador=Y`).
+>    * Ejemplos:
+>
+>      ```
+>      /api/tabla
+>      /api/calendario
+>      /api/resultados
+>      /api/jugadores?equipo=X
+>      /api/logo?equipo=X
+>      /api/estadisticas?jugador=Y
+>      /api/goleadores
+>      /api/asistencias
+>      /api/historico?temporada=2025
+>      /api/noticias?equipo=X
+>      /api/info
+>      ```
+>    * Documentar todo en `/api/info` y con Swagger UI.
+>
+> **Objetivo final:**
+>
+> * Que el PANEL-L3HO sea un panel profesional, actualizado y con datos reales de la temporada 2025–2026.
+> * Que la API de la Liga MX funcione completa, sin datos faltantes y sin límites de uso.
+> * Que la API Key esté correctamente ubicada en el apartado de API Keys al final de la lista.
+>

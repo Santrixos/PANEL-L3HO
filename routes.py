@@ -2333,6 +2333,47 @@ def api_docs_liga_mx():
     """Documentación de la API pública de Liga MX"""
     return render_template('api_docs_liga_mx.html')
 
+# Endpoints públicos de Liga MX 2025 - Todos los datos reales
+
+@app.route('/api/liga-mx/info')
+def api_liga_mx_info():
+    """Endpoint: /api/liga-mx/info - Documentación completa de la API Liga MX"""
+    return jsonify({
+        'api_name': 'Liga MX API 2025',
+        'version': '1.0',
+        'temporada': '2025-2026',
+        'descripcion': 'API completa con datos reales de Liga MX desde fuentes mexicanas oficiales',
+        'actualizacion': 'Automática cada 30 minutos',
+        'endpoints': {
+            '/api/tabla': 'Tabla de posiciones actualizada',
+            '/api/calendario': 'Calendario de partidos (filtrable por equipo)',
+            '/api/goleadores': 'Tabla de goleadores',
+            '/api/jugadores': 'Estadísticas de jugadores (filtrable por equipo)',
+            '/api/noticias': 'Noticias recientes (filtrable por equipo)',
+            '/api/public/liga-mx': 'Endpoint público completo con todos los datos'
+        },
+        'parametros': {
+            'api_key': 'Requerida en todos los endpoints',
+            'equipo': 'Opcional - filtra por nombre de equipo',
+            'jugador': 'Opcional - filtra por nombre de jugador'
+        },
+        'fuentes': [
+            'ESPN México',
+            'Mediotiempo', 
+            'Liga MX Oficial',
+            'Futbol Total',
+            'SofaScore',
+            'FlashScore',
+            'OneFootball'
+        ],
+        'api_key_ejemplo': 'L3HO_LIGAMX_MASTER_KEY_2025_UNLIMITED',
+        'ejemplos_uso': {
+            'tabla': '/api/tabla?api_key=TU_API_KEY',
+            'calendario_america': '/api/calendario?api_key=TU_API_KEY&equipo=América',
+            'jugadores_chivas': '/api/jugadores?api_key=TU_API_KEY&equipo=Guadalajara'
+        }
+    })
+
 @app.route('/api/liga-mx/tabla-quick')
 def api_liga_mx_tabla_quick():
     """API rápida para tabla de posiciones (para dashboard)"""
