@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ejemplo - Conectar con Panel L3HO Liga MX API</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+        th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #f5f5f5; }
+        .loading { color: #666; font-style: italic; }
+        .error { color: red; }
+        .success { color: green; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏆 Liga MX Apertura 2025 - Datos Reales</h1>
+        <p><strong>API Key:</strong> L3HO_LIGAMX_MASTER_KEY_2025_UNLIMITED</p>
+        
+        <!-- Tabla de Posiciones -->
+        <div class="section">
+            <h2>📊 Tabla de Posiciones</h2>
+            <button onclick="cargarTabla()">Actualizar Tabla</button>
+            <div id="tabla-content" class="loading">Cargando...</div>
+        </div>
+
+        <!-- Goleadores -->
+        <div class="section">
+            <h2>⚽ Tabla de Goleadores</h2>
+            <button onclick="cargarGoleadores()">Actualizar Goleadores</button>
+            <div id="goleadores-content" class="loading">Cargando...</div>
+        </div>
+
+        <!-- Próximos Partidos -->
+        <div class="section">
+            <h2>🗓️ Próximos Partidos</h2>
+            <button onclick="cargarCalendario()">Actualizar Calendario</button>
+            <div id="calendario-content" class="loading">Cargando...</div>
+        </div>
+
+        <!-- Noticias -->
+        <div class="section">
+            <h2>📰 Noticias Recientes</h2>
+            <button onclick="cargarNoticias()">Actualizar Noticias</button>
+            <div id="noticias-content" class="loading">Cargando...</div>
+        </div>
+    </div>
+
+    <script>
+        // Configuración de la API
+        const API_BASE = 'http://localhost:5000/api';
+        const API_KEY = 'L3HO_LIGAMX_MASTER_KEY_2025_UNLIMITED';
+
+        // Función para hacer requests a la API
+        async function apiRequest(endpoint) {
+            try {
+                const response = await fetch(`${API_BASE}${endpoint}?api_key=${API_KEY}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.error('Error API:', error);
+                throw error;
+            }
+        }
+
+        // Cargar tabla de posiciones
+        async function cargarTabla() {
+            const container = document.getElementById('tabla-content');
+            container.innerHTML = '<div class="loading">Cargando tabla...</div>';
+            
+            try {
+                const data = await apiRequest('/tabla');
+                
+                let html = `
+                    <p class="success">✅ ${data.temporada} - Jornada ${data.jornada_actual}</p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Pos</th>
+                                <th>Equipo</th>
+                                <th>PJ</th>
+                                <th>G</th>
+                                <th>E</th>
+                                <th>P</th>
+                                <th>GF</th>
+                                <th>GC</th>
+                                <th>DIF</th>
+                                <th>PTS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                data.tabla_posiciones.forEach((equipo, index) => {
+                    html += `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td><strong>${equipo.equipo}</strong></td>
+                            <td>${equipo.partidos_jugados}</td>
+                            <td>${equipo.ganados}</td>
+                            <td>${equipo.empatados}</td>
+                            <td>${equipo.perdidos}</td>
+                            <td>${equipo.goles_favor}</td>
+                            <td>${equipo.goles_contra}</td>
+                            <td>${equipo.diferencia_goles}</td>
+                            <td><strong>${equipo.puntos}</strong></td>
+                        </tr>
+                    `;
+                });
+                
+                html += `
+                        </tbody>
+                    </table>
+                    <p><small>Actualizado: ${data.ultima_actualizacion}</small></p>
+                `;
+                
+                container.innerHTML = html;
+            } catch (error) {
+                container.innerHTML = `<div class="error">❌ Error cargando tabla: ${error.message}</div>`;
+            }
+        }
+
+        // Cargar goleadores
+        async function cargarGoleadores() {
+            const container = document.getElementById('goleadores-content');
+            container.innerHTML = '<div class="loading">Cargando goleadores...</div>';
+            
+            try {
+                const data = await apiRequest('/goleadores');
+                
+                let html = `
+                    <p class="success">✅ Líder: ${data.lider.nombre} (${data.lider.goles} goles)</p>
+                    <table>
+                        <thead>
+                            <tr><th>Pos</th><th>Jugador</th><th>Equipo</th><th>Goles</th><th>Asist</th><th>PJ</th></tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                data.goleadores.forEach((jugador, index) => {
+                    html += `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td><strong>${jugador.nombre}</strong></td>
+                            <td>${jugador.equipo}</td>
+                            <td><strong>${jugador.goles}</strong></td>
+                            <td>${jugador.asistencias}</td>
+                            <td>${jugador.partidos_jugados}</td>
+                        </tr>
+                    `;
+                });
+                
+                html += '</tbody></table>';
+                container.innerHTML = html;
+            } catch (error) {
+                container.innerHTML = `<div class="error">❌ Error cargando goleadores: ${error.message}</div>`;
+            }
+        }
+
+        // Cargar calendario
+        async function cargarCalendario() {
+            const container = document.getElementById('calendario-content');
+            container.innerHTML = '<div class="loading">Cargando partidos...</div>';
+            
+            try {
+                const data = await apiRequest('/calendario');
+                
+                let html = `<p class="success">✅ ${data.total_partidos} partidos</p>`;
+                
+                data.partidos.slice(0, 8).forEach(partido => {
+                    const resultado = partido.goles_local !== null ? 
+                        ` ${partido.goles_local}-${partido.goles_visitante}` : '';
+                    const estado = partido.estado === 'finalizado' ? '✅' : '🕒';
+                    
+                    html += `
+                        <div style="margin: 10px 0; padding: 10px; background: #f9f9f9; border-radius: 5px;">
+                            ${estado} <strong>Jornada ${partido.jornada}</strong><br>
+                            ${partido.equipo_local} vs ${partido.equipo_visitante}${resultado}<br>
+                            <small>${partido.fecha} | ${partido.estado}</small>
+                        </div>
+                    `;
+                });
+                
+                container.innerHTML = html;
+            } catch (error) {
+                container.innerHTML = `<div class="error">❌ Error cargando calendario: ${error.message}</div>`;
+            }
+        }
+
+        // Cargar noticias
+        async function cargarNoticias() {
+            const container = document.getElementById('noticias-content');
+            container.innerHTML = '<div class="loading">Cargando noticias...</div>';
+            
+            try {
+                const data = await apiRequest('/noticias');
+                
+                let html = `<p class="success">✅ ${data.total_noticias} noticias recientes</p>`;
+                
+                data.noticias.forEach(noticia => {
+                    html += `
+                        <div style="margin: 15px 0; padding: 15px; background: #f9f9f9; border-radius: 5px;">
+                            <h4 style="margin: 0 0 10px 0;">${noticia.titulo}</h4>
+                            <p style="margin: 0 0 10px 0;">${noticia.resumen}</p>
+                            <small>📰 ${noticia.fuente} | ${noticia.fecha}</small>
+                        </div>
+                    `;
+                });
+                
+                container.innerHTML = html;
+            } catch (error) {
+                container.innerHTML = `<div class="error">❌ Error cargando noticias: ${error.message}</div>`;
+            }
+        }
+
+        // Cargar datos al iniciar la página
+        window.addEventListener('load', () => {
+            cargarTabla();
+            cargarGoleadores();
+            cargarCalendario();
+            cargarNoticias();
+        });
+
+        // Auto-actualización cada 5 minutos
+        setInterval(() => {
+            console.log('🔄 Auto-actualizando datos...');
+            cargarTabla();
+            cargarGoleadores();
+            cargarCalendario();
+            cargarNoticias();
+        }, 300000); // 5 minutos
+    </script>
+</body>
+</html>
