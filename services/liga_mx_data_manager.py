@@ -185,7 +185,7 @@ class LigaMXDataManager:
                 if not partido_existente:
                     # Crear nuevo partido
                     partido = LigaMXPartido(
-                        temporada='2024',
+                        temporada='2025-2026',
                         jornada=partido_data.get('jornada', 1),
                         equipo_local_id=equipo_local.id,
                         equipo_visitante_id=equipo_visitante.id,

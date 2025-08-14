@@ -2295,7 +2295,7 @@ def api_publica_liga_mx():
         response_data = {
             'status': 'success',
             'liga': 'Liga MX',
-            'temporada': '2025',
+            'temporada': '2025-2026',
             'tabla_posiciones': tabla_datos,
             'partidos_recientes': [{
                 'jornada': p.jornada,
